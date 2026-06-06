@@ -42,8 +42,8 @@ nav{background:#4C1D95;display:flex;align-items:stretch;justify-content:space-be
 .phase-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .phase-dot{display:flex;align-items:center;gap:3px;font-size:10px;color:#6B7280}
 .phase-swatch{width:10px;height:10px;border-radius:2px}
-.uc-card{border-radius:8px;overflow:hidden;margin-bottom:8px;border:1.5px solid;cursor:pointer}
-.uc-header{padding:9px 12px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid}
+.uc-card{border-radius:8px;overflow:hidden;margin-bottom:8px;border:1.5px solid}
+.uc-header{padding:9px 12px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid;cursor:pointer}
 .uc-name{font-weight:700;font-size:12px}
 .uc-preview{font-size:10px;color:#6B7280;margin-top:2px}
 .uc-body{padding:10px 12px 12px;background:#fff}
@@ -58,10 +58,10 @@ nav{background:#4C1D95;display:flex;align-items:stretch;justify-content:space-be
 .raid-table{width:100%;border-collapse:collapse;font-size:11px}
 .raid-table th{padding:7px 8px;text-align:left;font-weight:600;color:#fff;white-space:nowrap}
 .raid-table td{padding:6px 8px;vertical-align:top}
-.rag-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.rag-dot{width:11px;height:11px;border-radius:50%;display:inline-block;vertical-align:middle}
 .type-badge{border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700}
 .team-grid{display:flex;flex-wrap:wrap;gap:8px}
-.team-card{border-radius:8px;padding:8px 12px;min-width:100px;border:1px solid}
+.team-card{border-radius:8px;padding:8px 12px;min-width:100px;border:1px solid;position:relative}
 .team-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;margin-bottom:5px}
 .team-name{font-weight:700;font-size:11px;color:#111827}
 .team-role{font-size:10px}
@@ -75,6 +75,11 @@ nav{background:#4C1D95;display:flex;align-items:stretch;justify-content:space-be
 .board-table td{padding:4px;border-bottom:1px solid #F3F4F6;border-left:1px solid #F3F4F6;vertical-align:top}
 .board-squad-cell{padding:8px 10px;font-weight:700;font-size:9px;color:#fff;border-bottom:2px solid #fff;min-width:110px}
 .board-sticky{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:8px;font-weight:600;color:#fff;line-height:1.3}
+.edit-input{width:100%;border:1px solid #D1D5DB;border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;color:#111827}
+.edit-textarea{width:100%;border:1px solid #D1D5DB;border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;resize:vertical;min-height:52px;color:#111827}
+.edit-banner{background:#FEF3C7;border:1px solid #FCD34D;padding:7px 12px;border-radius:6px;font-size:11px;color:#92400E;margin-bottom:10px;font-weight:600}
+.btn-add{width:100%;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;margin-top:8px;border:1px dashed}
+.btn-del{background:#FEE2E2;color:#B91C1C;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:10px;font-weight:700;margin-left:6px;flex-shrink:0}
 .progress-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
 .progress-overlay.show{display:flex}
 .progress-box{background:#fff;border-radius:12px;padding:28px 36px;text-align:center;min-width:260px}
@@ -92,7 +97,7 @@ nav{background:#4C1D95;display:flex;align-items:stretch;justify-content:space-be
       <div class="nav-sub">BT AI Ops</div>
       <div class="nav-title">PI2 Planning Tool</div>
     </div>
-    <div class="nav-date" id="navDate">July 2026</div>
+    <div class="nav-date">July 2026</div>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchView('squads',this)">Squad Boards</button>
@@ -195,285 +200,353 @@ var SQUADS = [
   }
 ];
 
-var SPRINTS = ["Sprint 1","Sprint 2","Sprint 3","Sprint 4","Sprint 5","BRP","Sprint 6"];
-var PHASE_COLORS = {design:"#A78BFA",build:"#7C3AED",test:"#0891B2",uat:"#D97706",live:"#10B981"};
-var RAG_COLORS = {Red:"#EF4444",Amber:"#F59E0B",Green:"#10B981"};
+var SPRINTS=["Sprint 1","Sprint 2","Sprint 3","Sprint 4","Sprint 5","BRP","Sprint 6"];
+var PHASE_COLORS={design:"#A78BFA",build:"#7C3AED",test:"#0891B2",uat:"#D97706",live:"#10B981"};
+var RAG_COLORS={Red:"#EF4444",Amber:"#F59E0B",Green:"#10B981"};
+var RAG_OPTS=["Red","Amber","Green"];
+var TYPE_OPTS=["R","A","I","D"];
 
-var currentView = "squads";
-var activeSquad = null;
-var openCards = {};
-var editingSquads = {};
-var activeTabs = {};
+var currentView="squads";
+var activeSquad=null;
+var openCards={};
+var editingSquads={};
+var activeTabs={};
 
-function render() {
-  var root = document.getElementById("appRoot");
-  if (currentView === "squads") root.innerHTML = renderSquads();
-  else if (currentView === "board") root.innerHTML = renderBoard();
-  else root.innerHTML = renderDeps();
+function esc(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-function renderSquads() {
-  var pills = '<div class="squad-pills">';
-  pills += '<button class="pill" style="background:' + (activeSquad===null?"#4C1D95":"#fff") + ';color:' + (activeSquad===null?"#fff":"#6B46C1") + ';border-color:#7C3AED" onclick="setSquad(null)">All Squads</button>';
-  for (var i=0;i<SQUADS.length;i++) {
+function render(){
+  var root=document.getElementById("appRoot");
+  if(currentView==="squads") root.innerHTML=renderSquads();
+  else if(currentView==="board") root.innerHTML=renderBoard();
+  else root.innerHTML=renderDeps();
+}
+
+function renderSquads(){
+  var pills='<div class="squad-pills">';
+  pills+='<button class="pill" style="background:'+(activeSquad===null?"#4C1D95":"#fff")+';color:'+(activeSquad===null?"#fff":"#6B46C1")+';border-color:#7C3AED" onclick="setSquad(null)">All Squads</button>';
+  for(var i=0;i<SQUADS.length;i++){
     var s=SQUADS[i];
-    pills += '<button class="pill" style="background:' + (activeSquad===i?s.bg:s.light) + ';color:' + (activeSquad===i?"#fff":s.bg) + ';border-color:' + s.bg + '" onclick="setSquad(' + i + ')">' + s.name + '</button>';
+    pills+='<button class="pill" style="background:'+(activeSquad===i?s.bg:s.light)+';color:'+(activeSquad===i?"#fff":s.bg)+';border-color:'+s.bg+'" onclick="setSquad('+i+')">'+esc(s.name)+'</button>';
   }
-  pills += '</div>';
-  var cards = '';
-  var list = activeSquad!==null ? [[activeSquad,SQUADS[activeSquad]]] : SQUADS.map(function(s,i){return [i,s]});
-  for (var j=0;j<list.length;j++) cards += renderSquadCard(list[j][0], list[j][1]);
-  return pills + cards;
+  pills+='</div>';
+  var cards='';
+  var list=activeSquad!==null?[[activeSquad,SQUADS[activeSquad]]]:SQUADS.map(function(s,i){return[i,s]});
+  for(var j=0;j<list.length;j++) cards+=renderSquadCard(list[j][0],list[j][1]);
+  return pills+cards;
 }
 
-function renderSquadCard(idx, sq) {
-  var tab = activeTabs[idx] || "sprints";
-  var editing = !!editingSquads[idx];
-  var confBtns = "";
-  for (var v=1;v<=5;v++) {
-    confBtns += '<button class="conf-btn" onclick="setConf(' + idx + ',' + v + ')" style="background:' + (sq.confidence>=v?"#FCD34D":"rgba(255,255,255,.25)") + ';color:' + (sq.confidence>=v?"#92400E":"rgba(255,255,255,.6)") + '">' + v + '</button>';
+function renderSquadCard(idx,sq){
+  var tab=activeTabs[idx]||"sprints";
+  var editing=!!editingSquads[idx];
+  var confBtns="";
+  for(var v=1;v<=5;v++){
+    confBtns+='<button class="conf-btn" onclick="setConf('+idx+','+v+')" style="background:'+(sq.confidence>=v?"#FCD34D":"rgba(255,255,255,.25)")+';color:'+(sq.confidence>=v?"#92400E":"rgba(255,255,255,.6)")+'">'+v+'</button>';
   }
-  var header = '<div class="squad-header" style="background:' + sq.bg + '">' +
-    '<div><div class="squad-name">' + sq.name + '</div>' +
-    '<div class="squad-meta">' + sq.useCases.length + ' use cases &middot; ' + sq.team.length + ' members</div></div>' +
-    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-    '<div class="confidence-row"><span class="conf-label">Confidence</span>' + confBtns + '</div>' +
-    '<button class="btn-edit ' + (editing?"active":"") + '" onclick="toggleEdit(' + idx + ')">' + (editing?"&#10003; Done":"&#9998; Edit") + '</button>' +
+  var nameField=editing
+    ?'<input class="edit-input" style="background:rgba(255,255,255,.9);color:#1F2937;font-weight:800;font-size:14px;border:none;border-radius:4px;padding:2px 6px" value="'+esc(sq.name)+'" onchange="SQUADS['+idx+'].name=this.value;renderSquadMeta('+idx+')" />'
+    :'<div class="squad-name">'+esc(sq.name)+'</div>';
+  var header='<div class="squad-header" style="background:'+sq.bg+'">'+
+    '<div>'+nameField+'<div class="squad-meta" id="smeta'+idx+'">'+sq.useCases.length+' use cases &middot; '+sq.team.length+' members</div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+    '<div class="confidence-row"><span class="conf-label">Confidence</span>'+confBtns+'</div>'+
+    '<button class="btn-edit '+(editing?"active":"")+'" onclick="toggleEdit('+idx+')">'+(editing?"&#10003; Done":"&#9998; Edit")+'</button>'+
     '</div></div>';
-  var tabs = [["sprints","Sprint Plan"],["raid","RAID Log"],["team","Team"],["deps","Dependencies"]];
-  var tabBar = '<div class="tab-bar">';
-  for (var t=0;t<tabs.length;t++) {
-    tabBar += '<button class="tab-btn ' + (tab===tabs[t][0]?"active":"") + '" style="' + (tab===tabs[t][0]?"color:"+sq.bg:"") + '" onclick="setTab(' + idx + ',\'' + tabs[t][0] + '\')">' + tabs[t][1] + '</button>';
+  var tabs=[["sprints","Sprint Plan"],["raid","RAID Log"],["team","Team"],["deps","Dependencies"]];
+  var tabBar='<div class="tab-bar">';
+  for(var t=0;t<tabs.length;t++){
+    tabBar+='<button class="tab-btn '+(tab===tabs[t][0]?"active":"")+'" style="'+(tab===tabs[t][0]?"color:"+sq.bg:"")+'" onclick="setTab('+idx+',\''+tabs[t][0]+'\')">'+tabs[t][1]+'</button>';
   }
-  tabBar += '</div>';
-  var body = "";
-  if (tab==="sprints") body = renderSprintsTab(idx,sq);
-  else if (tab==="raid") body = renderRaidTab(idx,sq);
-  else if (tab==="team") body = renderTeamTab(sq);
-  else body = renderDepsTab(sq);
-  return '<div class="squad-card" style="border:1px solid ' + sq.border + '">' + header + tabBar + '<div class="tab-body">' + body + '</div></div>';
+  tabBar+='</div>';
+  var body="";
+  if(tab==="sprints") body=renderSprintsTab(idx,sq);
+  else if(tab==="raid") body=renderRaidTab(idx,sq);
+  else if(tab==="team") body=renderTeamTab(idx,sq);
+  else body=renderDepsTab(idx,sq);
+  return '<div class="squad-card" style="border:1px solid '+sq.border+'">'+header+tabBar+'<div class="tab-body">'+body+'</div></div>';
 }
 
-function renderSprintsTab(idx, sq) {
-  var legend = '<div class="phase-legend">';
-  var phases = Object.keys(PHASE_COLORS);
-  for (var p=0;p<phases.length;p++) {
-    legend += '<span class="phase-dot"><span class="phase-swatch" style="background:' + PHASE_COLORS[phases[p]] + '"></span>' + phases[p] + '</span>';
-  }
-  legend += '</div>';
-  var hdrCells = "";
-  for (var s=0;s<SPRINTS.length;s++) {
-    hdrCells += '<div class="sprint-hcell" style="background:' + (SPRINTS[s]==="BRP"?"#FCD34D":"#4C1D95") + ';color:' + (SPRINTS[s]==="BRP"?"#1F2937":"#fff") + '">' + SPRINTS[s] + '</div>';
-  }
-  var cards = "";
-  for (var u=0;u<sq.useCases.length;u++) {
-    var uc = sq.useCases[u];
-    var key = idx+"-"+u;
-    var open = !!openCards[key];
-    var gridCells = "";
-    for (var sp=0;sp<SPRINTS.length;sp++) {
-      var ph = null;
-      for (var pp=0;pp<uc.phases.length;pp++) { if (uc.phases[pp].s===SPRINTS[sp]) { ph=uc.phases[pp]; break; } }
-      var bg = ph ? (PHASE_COLORS[ph.t]||sq.bg) : (SPRINTS[sp]==="BRP"?"#FCD34D22":"#F3F4F6");
-      gridCells += '<div class="sprint-cell" style="background:' + bg + '">' + (ph?ph.l:"") + '</div>';
+function renderSquadMeta(idx){
+  var el=document.getElementById("smeta"+idx);
+  if(el) el.innerHTML=SQUADS[idx].useCases.length+" use cases &middot; "+SQUADS[idx].team.length+" members";
+}
+
+function renderSprintsTab(idx,sq){
+  var editing=!!editingSquads[idx];
+  var legend='<div class="phase-legend">';
+  var phases=Object.keys(PHASE_COLORS);
+  for(var p=0;p<phases.length;p++) legend+='<span class="phase-dot"><span class="phase-swatch" style="background:'+PHASE_COLORS[phases[p]]+'"></span>'+phases[p]+'</span>';
+  legend+='</div>';
+  if(editing) legend+='<div class="edit-banner">&#9998; Edit mode — click any use case to expand, then edit its name and description below.</div>';
+  var hdrCells="";
+  for(var s=0;s<SPRINTS.length;s++) hdrCells+='<div class="sprint-hcell" style="background:'+(SPRINTS[s]==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(SPRINTS[s]==="BRP"?"#1F2937":"#fff")+'">'+SPRINTS[s]+'</div>';
+  var cards="";
+  for(var u=0;u<sq.useCases.length;u++){
+    var uc=sq.useCases[u];
+    var key=idx+"-"+u;
+    var open=!!openCards[key];
+    var gridCells="";
+    for(var sp=0;sp<SPRINTS.length;sp++){
+      var ph=null;
+      for(var pp=0;pp<uc.phases.length;pp++){if(uc.phases[pp].s===SPRINTS[sp]){ph=uc.phases[pp];break;}}
+      var bg=ph?(PHASE_COLORS[ph.t]||sq.bg):(SPRINTS[sp]==="BRP"?"#FCD34D22":"#F3F4F6");
+      gridCells+='<div class="sprint-cell" style="background:'+bg+'">'+(ph?esc(ph.l):"")+'</div>';
     }
-    var tags = "";
-    for (var pp2=0;pp2<uc.phases.length;pp2++) {
+    var tags="";
+    for(var pp2=0;pp2<uc.phases.length;pp2++){
       var ph2=uc.phases[pp2];
-      tags += '<span class="phase-tag" style="background:' + (PHASE_COLORS[ph2.t]||sq.bg) + '22;color:' + (PHASE_COLORS[ph2.t]||sq.bg) + ';border-color:' + (PHASE_COLORS[ph2.t]||sq.bg) + '44">' + ph2.s + ': ' + ph2.l + '</span>';
+      tags+='<span class="phase-tag" style="background:'+(PHASE_COLORS[ph2.t]||sq.bg)+'22;color:'+(PHASE_COLORS[ph2.t]||sq.bg)+';border-color:'+(PHASE_COLORS[ph2.t]||sq.bg)+'44">'+esc(ph2.s)+': '+esc(ph2.l)+'</span>';
     }
-    cards += '<div class="uc-card" style="border-color:' + sq.border + '">' +
-      '<div class="uc-header" style="border-bottom-color:' + sq.bg + ';background:#fff" onclick="toggleUC(\'' + key + '\')">' +
-      '<div><div class="uc-name" style="color:' + sq.bg + '">' + uc.name + '</div>' +
-      (!open ? '<div class="uc-preview">' + uc.desc.slice(0,70) + (uc.desc.length>70?"...":"") + '</div>' : "") +
-      '</div><span style="color:' + sq.bg + ';font-size:11px;margin-left:8px">' + (open?"&#9650;":"&#9660;") + '</span></div>' +
-      (open ? '<div class="uc-body"><div class="uc-desc">' + uc.desc + '</div>' +
-        '<div class="sprint-label">SPRINT PLAN</div>' +
-        '<div class="sprint-header">' + hdrCells + '</div>' +
-        '<div class="sprint-grid">' + gridCells + '</div>' +
-        '<div class="phase-tags">' + tags + '</div></div>' : "") +
-      '</div>';
+    var nameField=editing
+      ?'<input class="edit-input" value="'+esc(uc.name)+'" style="font-weight:700;font-size:12px;color:'+sq.bg+'" onchange="SQUADS['+idx+'].useCases['+u+'].name=this.value" />'
+      :'<div class="uc-name" style="color:'+sq.bg+'">'+esc(uc.name)+'</div>';
+    var descField=editing
+      ?'<textarea class="edit-textarea" onchange="SQUADS['+idx+'].useCases['+u+'].desc=this.value">'+esc(uc.desc)+'</textarea>'
+      :'<div class="uc-desc">'+esc(uc.desc)+'</div>';
+    var delBtn=editing?'<button class="btn-del" onclick="event.stopPropagation();delUC('+idx+','+u+')">&#10005; Remove</button>':"";
+    cards+='<div class="uc-card" style="border-color:'+sq.border+'">'+
+      '<div class="uc-header" style="border-bottom-color:'+sq.bg+';background:#fff" onclick="toggleUC(\''+key+'\')">'+
+      '<div style="flex:1">'+nameField+(!open?'<div class="uc-preview">'+esc(uc.desc.slice(0,70))+(uc.desc.length>70?"...":"")+'</div>':"")+'</div>'+
+      '<div style="display:flex;align-items:center;gap:4px">'+delBtn+'<span style="color:'+sq.bg+';font-size:11px;margin-left:4px">'+(open?"&#9650;":"&#9660;")+'</span></div></div>'+
+      (open?'<div class="uc-body">'+descField+
+        '<div class="sprint-label" style="margin-top:8px">SPRINT PLAN</div>'+
+        '<div class="sprint-header">'+hdrCells+'</div>'+
+        '<div class="sprint-grid">'+gridCells+'</div>'+
+        '<div class="phase-tags">'+tags+'</div></div>':"")+'</div>';
   }
-  return legend + cards;
+  var addBtn=editing?'<button class="btn-add" style="background:'+sq.light+';color:'+sq.bg+';border-color:'+sq.bg+'" onclick="addUC('+idx+')">+ Add Use Case</button>':"";
+  return legend+cards+addBtn;
 }
 
-function renderRaidTab(idx, sq) {
-  var rows = "";
-  for (var r=0;r<sq.raid.length;r++) {
-    var ri = sq.raid[r];
-    var rag = RAG_COLORS[ri.rag]||"#9CA3AF";
-    var typeBg = ri.t==="R"?"#FEE2E2":ri.t==="I"?"#FEF3C7":ri.t==="A"?"#D1FAE5":"#E0F2FE";
-    var typeCol = ri.t==="R"?"#B91C1C":ri.t==="I"?"#92400E":ri.t==="A"?"#065F46":"#0369A1";
-    rows += '<tr style="background:' + (r%2===0?"#fff":sq.light) + '">' +
-      '<td style="color:' + sq.bg + ';font-weight:700">' + ri.id + '</td>' +
-      '<td><span class="type-badge" style="background:' + typeBg + ';color:' + typeCol + '">' + ri.t + '</span></td>' +
-      '<td>' + ri.desc + '</td>' +
-      '<td style="white-space:nowrap">' + ri.owner + '</td>' +
-      '<td style="text-align:center"><span class="rag-dot" style="background:' + rag + '" title="' + ri.rag + '"></span></td>' +
-      '<td style="color:#6B7280">' + ri.mit + '</td></tr>';
+function renderRaidTab(idx,sq){
+  var editing=!!editingSquads[idx];
+  var rows="";
+  for(var r=0;r<sq.raid.length;r++){
+    var ri=sq.raid[r];
+    var rag=RAG_COLORS[ri.rag]||"#9CA3AF";
+    var typeBg=ri.t==="R"?"#FEE2E2":ri.t==="I"?"#FEF3C7":ri.t==="A"?"#D1FAE5":"#E0F2FE";
+    var typeCol=ri.t==="R"?"#B91C1C":ri.t==="I"?"#92400E":ri.t==="A"?"#065F46":"#0369A1";
+    if(editing){
+      var typeOpts="";
+      for(var ti=0;ti<TYPE_OPTS.length;ti++) typeOpts+='<option value="'+TYPE_OPTS[ti]+'"'+(ri.t===TYPE_OPTS[ti]?" selected":"")+'>'+TYPE_OPTS[ti]+'</option>';
+      var ragOpts="";
+      for(var oi=0;oi<RAG_OPTS.length;oi++) ragOpts+='<option value="'+RAG_OPTS[oi]+'"'+(ri.rag===RAG_OPTS[oi]?" selected":"")+'>'+RAG_OPTS[oi]+'</option>';
+      rows+='<tr style="background:'+(r%2===0?"#fff":sq.light)+'">'+
+        '<td><input class="edit-input" value="'+esc(ri.id)+'" style="width:80px" onchange="SQUADS['+idx+'].raid['+r+'].id=this.value"></td>'+
+        '<td><select class="edit-input" style="width:60px" onchange="SQUADS['+idx+'].raid['+r+'].t=this.value;render()">'+typeOpts+'</select></td>'+
+        '<td><textarea class="edit-textarea" style="min-height:38px" onchange="SQUADS['+idx+'].raid['+r+'].desc=this.value">'+esc(ri.desc)+'</textarea></td>'+
+        '<td><input class="edit-input" value="'+esc(ri.owner)+'" onchange="SQUADS['+idx+'].raid['+r+'].owner=this.value"></td>'+
+        '<td><select class="edit-input" style="width:75px" onchange="SQUADS['+idx+'].raid['+r+'].rag=this.value;render()">'+ragOpts+'</select></td>'+
+        '<td><textarea class="edit-textarea" style="min-height:38px" onchange="SQUADS['+idx+'].raid['+r+'].mit=this.value">'+esc(ri.mit)+'</textarea></td>'+
+        '<td><button class="btn-del" onclick="delRaid('+idx+','+r+')">&#10005;</button></td></tr>';
+    } else {
+      rows+='<tr style="background:'+(r%2===0?"#fff":sq.light)+'">'+
+        '<td style="color:'+sq.bg+';font-weight:700">'+esc(ri.id)+'</td>'+
+        '<td><span class="type-badge" style="background:'+typeBg+';color:'+typeCol+'">'+ri.t+'</span></td>'+
+        '<td>'+esc(ri.desc)+'</td>'+
+        '<td style="white-space:nowrap">'+esc(ri.owner)+'</td>'+
+        '<td style="text-align:center"><span class="rag-dot" style="background:'+rag+'" title="'+ri.rag+'"></span> '+ri.rag+'</td>'+
+        '<td style="color:#6B7280">'+esc(ri.mit)+'</td></tr>';
+    }
   }
-  if (!rows) rows = '<tr><td colspan="6" style="padding:14px;text-align:center;color:#D1D5DB;font-style:italic">No RAID items yet</td></tr>';
-  return '<div style="overflow-x:auto"><table class="raid-table"><thead><tr style="background:' + sq.bg + '"><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>RAG</th><th>Mitigation</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  if(!rows) rows='<tr><td colspan="'+(editing?7:6)+'" style="padding:14px;text-align:center;color:#D1D5DB;font-style:italic">No RAID items yet — click Edit to add</td></tr>';
+  var extraCol=editing?'<th>Del</th>':"";
+  var addBtn=editing?'<div style="margin-top:10px"><button class="btn-add" style="background:'+sq.light+';color:'+sq.bg+';border-color:'+sq.bg+'" onclick="addRaid('+idx+')">+ Add RAID Item</button></div>':"";
+  var banner=editing?'<div class="edit-banner">&#9998; Edit mode — all fields are editable. Use the dropdowns to change Type and RAG status.</div>':"";
+  return banner+'<div style="overflow-x:auto"><table class="raid-table"><thead><tr style="background:'+sq.bg+'"><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>RAG</th><th>Mitigation</th>'+extraCol+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+addBtn;
 }
 
-function renderTeamTab(sq) {
-  var cards = "";
-  for (var i=0;i<sq.team.length;i++) {
+function renderTeamTab(idx,sq){
+  var editing=!!editingSquads[idx];
+  var cards="";
+  for(var i=0;i<sq.team.length;i++){
     var m=sq.team[i];
-    var initials = m.n.split(" ").map(function(w){return w[0]}).slice(0,2).join("");
-    cards += '<div class="team-card" style="background:' + sq.light + ';border-color:' + sq.border + '">' +
-      '<div class="team-avatar" style="background:' + sq.bg + '">' + initials + '</div>' +
-      '<div class="team-name">' + m.n + '</div>' +
-      '<div class="team-role" style="color:' + sq.bg + '">' + m.r + '</div></div>';
+    var initials=m.n.split(" ").map(function(w){return w[0]||""}).slice(0,2).join("");
+    if(editing){
+      cards+='<div class="team-card" style="background:'+sq.light+';border-color:'+sq.border+';min-width:160px">'+
+        '<div class="team-avatar" style="background:'+sq.bg+'">'+initials+'</div>'+
+        '<input class="edit-input" value="'+esc(m.n)+'" placeholder="Name" style="margin-bottom:4px" onchange="SQUADS['+idx+'].team['+i+'].n=this.value;render()">'+
+        '<input class="edit-input" value="'+esc(m.r)+'" placeholder="Role" style="color:'+sq.bg+'" onchange="SQUADS['+idx+'].team['+i+'].r=this.value">'+
+        '<div style="text-align:right;margin-top:4px"><button class="btn-del" onclick="delTeam('+idx+','+i+')">&#10005; Remove</button></div></div>';
+    } else {
+      cards+='<div class="team-card" style="background:'+sq.light+';border-color:'+sq.border+'">'+
+        '<div class="team-avatar" style="background:'+sq.bg+'">'+initials+'</div>'+
+        '<div class="team-name">'+esc(m.n)+'</div>'+
+        '<div class="team-role" style="color:'+sq.bg+'">'+esc(m.r)+'</div></div>';
+    }
   }
-  return '<div class="team-grid">' + cards + '</div>';
+  var addBtn=editing?'<button class="btn-add" style="background:'+sq.light+';color:'+sq.bg+';border-color:'+sq.bg+';margin-top:8px;width:auto;padding:6px 14px" onclick="addTeam('+idx+')">+ Add Member</button>':"";
+  var banner=editing?'<div class="edit-banner" style="margin-bottom:10px">&#9998; Edit mode — update names and roles, or add/remove team members.</div>':"";
+  return banner+'<div class="team-grid">'+cards+'</div>'+addBtn;
 }
 
-function renderDepsTab(sq) {
-  var items = "";
-  for (var i=0;i<sq.deps.length;i++) {
-    items += '<div class="dep-item" style="background:' + sq.light + ';border-color:' + sq.border + '">' +
-      '<span class="dep-dot" style="background:' + sq.bg + '"></span>' +
-      '<span style="font-size:11px;color:#374151">' + sq.deps[i] + '</span></div>';
+function renderDepsTab(idx,sq){
+  var editing=!!editingSquads[idx];
+  var items="";
+  for(var i=0;i<sq.deps.length;i++){
+    if(editing){
+      items+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'+
+        '<span class="dep-dot" style="background:'+sq.bg+';flex-shrink:0"></span>'+
+        '<input class="edit-input" style="flex:1" value="'+esc(sq.deps[i])+'" onchange="SQUADS['+idx+'].deps['+i+']=this.value">'+
+        '<button class="btn-del" onclick="delDep('+idx+','+i+')">&#10005;</button></div>';
+    } else {
+      items+='<div class="dep-item" style="background:'+sq.light+';border-color:'+sq.border+'">'+
+        '<span class="dep-dot" style="background:'+sq.bg+'"></span>'+
+        '<span style="font-size:11px;color:#374151">'+esc(sq.deps[i])+'</span></div>';
+    }
   }
-  return '<div class="section-label">Dependencies</div>' + (items||'<p style="color:#9CA3AF;font-size:11px;font-style:italic">No dependencies recorded.</p>');
+  if(!items) items='<p style="color:#9CA3AF;font-size:11px;font-style:italic">No dependencies recorded.</p>';
+  var addBtn=editing?'<button class="btn-add" style="background:'+sq.light+';color:'+sq.bg+';border-color:'+sq.bg+'" onclick="addDep('+idx+')">+ Add Dependency</button>':"";
+  var banner=editing?'<div class="edit-banner">&#9998; Edit mode — update or remove dependencies below.</div>':"";
+  return '<div class="section-label">Dependencies</div>'+banner+items+addBtn;
 }
 
-function renderBoard() {
-  var hdrCells = '<th style="background:#4C1D95;color:#fff;text-align:left;padding:6px 10px;min-width:110px">Squad</th>';
-  for (var s=0;s<SPRINTS.length;s++) {
-    hdrCells += '<th style="background:' + (SPRINTS[s]==="BRP"?"#FCD34D":"#4C1D95") + ';color:' + (SPRINTS[s]==="BRP"?"#1F2937":"#fff") + '">' + SPRINTS[s] + '</th>';
-  }
-  var rows = "";
-  for (var qi=0;qi<SQUADS.length;qi++) {
-    var sq=SQUADS[qi];
-    var cells = "";
-    for (var si=0;si<SPRINTS.length;si++) {
-      var stickies = "";
-      for (var ui=0;ui<sq.useCases.length;ui++) {
+function renderBoard(){
+  var hdrCells='<th style="background:#4C1D95;color:#fff;text-align:left;padding:6px 10px;min-width:110px">Squad</th>';
+  for(var s=0;s<SPRINTS.length;s++) hdrCells+='<th style="background:'+(SPRINTS[s]==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(SPRINTS[s]==="BRP"?"#1F2937":"#fff")+'">'+SPRINTS[s]+'</th>';
+  var rows="";
+  for(var qi=0;qi<SQUADS.length;qi++){
+    var sq=SQUADS[qi],cells="";
+    for(var si=0;si<SPRINTS.length;si++){
+      var stickies="";
+      for(var ui=0;ui<sq.useCases.length;ui++){
         var uc=sq.useCases[ui];
-        for (var pi=0;pi<uc.phases.length;pi++) {
-          if (uc.phases[pi].s===SPRINTS[si]) {
-            stickies += '<div class="board-sticky" style="background:' + (PHASE_COLORS[uc.phases[pi].t]||sq.bg) + '">' + uc.phases[pi].l + '</div>';
-          }
+        for(var pi=0;pi<uc.phases.length;pi++){
+          if(uc.phases[pi].s===SPRINTS[si]) stickies+='<div class="board-sticky" style="background:'+(PHASE_COLORS[uc.phases[pi].t]||sq.bg)+'">'+esc(uc.phases[pi].l)+'</div>';
         }
       }
-      cells += '<td style="background:' + (qi%2===0?"#FAFAFA":"#fff") + '">' + stickies + '</td>';
+      cells+='<td style="background:'+(qi%2===0?"#FAFAFA":"#fff")+'">'+stickies+'</td>';
     }
-    rows += '<tr><td class="board-squad-cell" style="background:' + sq.bg + '">' + sq.name + '</td>' + cells + '</tr>';
+    rows+='<tr><td class="board-squad-cell" style="background:'+sq.bg+'">'+esc(sq.name)+'</td>'+cells+'</tr>';
   }
-  return '<div class="board-wrap"><div class="board-title">Program Board &mdash; PI2 Plan on a Page</div><div style="overflow-x:auto"><table class="board-table"><thead><tr>' + hdrCells + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  return '<div class="board-wrap"><div class="board-title">Program Board &mdash; PI2 Plan on a Page</div><div style="overflow-x:auto"><table class="board-table"><thead><tr>'+hdrCells+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
-function renderDeps() {
-  var cards = "";
-  for (var i=0;i<SQUADS.length;i++) {
-    var sq=SQUADS[i];
-    var deps = "";
-    for (var d=0;d<sq.deps.length;d++) {
-      deps += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">' +
-        '<span style="width:5px;height:5px;border-radius:50%;background:' + sq.bg + ';margin-top:4px;flex-shrink:0"></span>' +
-        '<span style="font-size:10px;color:#374151">' + sq.deps[d] + '</span></div>';
+function renderDeps(){
+  var cards="";
+  for(var i=0;i<SQUADS.length;i++){
+    var sq=SQUADS[i],deps="",risks="";
+    for(var d=0;d<sq.deps.length;d++){
+      deps+='<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">'+
+        '<span style="width:5px;height:5px;border-radius:50%;background:'+sq.bg+';margin-top:4px;flex-shrink:0"></span>'+
+        '<span style="font-size:10px;color:#374151">'+esc(sq.deps[d])+'</span></div>';
     }
-    var risks = "";
-    for (var r=0;r<sq.raid.length;r++) {
-      if (sq.raid[r].rag==="Red"||sq.raid[r].rag==="Amber") {
-        risks += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">' +
-          '<span class="rag-dot" style="background:' + (RAG_COLORS[sq.raid[r].rag]||"#9CA3AF") + ';margin-top:2px;flex-shrink:0"></span>' +
-          '<span style="font-size:10px;color:#374151">' + sq.raid[r].desc + '</span></div>';
+    for(var r=0;r<sq.raid.length;r++){
+      if(sq.raid[r].rag==="Red"||sq.raid[r].rag==="Amber"){
+        risks+='<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">'+
+          '<span class="rag-dot" style="background:'+(RAG_COLORS[sq.raid[r].rag]||"#9CA3AF")+';margin-top:2px;flex-shrink:0"></span>'+
+          '<span style="font-size:10px;color:#374151">'+esc(sq.raid[r].desc)+'</span></div>';
       }
     }
-    cards += '<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid ' + sq.border + '">' +
-      '<div style="background:' + sq.bg + ';padding:10px 14px">' +
-      '<div style="color:#fff;font-weight:700;font-size:12px">' + sq.name + '</div>' +
-      '<div style="color:' + sq.border + 'cc;font-size:10px">Dependencies &amp; Risks</div></div>' +
-      '<div style="padding:12px">' +
-      '<div class="section-label">Dependencies</div>' + deps +
-      '<div class="section-label" style="margin-top:10px">Top Risks</div>' + (risks||'<p style="color:#9CA3AF;font-size:10px;font-style:italic">No red/amber risks</p>') +
+    cards+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid '+sq.border+'">'+
+      '<div style="background:'+sq.bg+';padding:10px 14px">'+
+      '<div style="color:#fff;font-weight:700;font-size:12px">'+esc(sq.name)+'</div>'+
+      '<div style="color:'+sq.border+'cc;font-size:10px">Dependencies &amp; Risks</div></div>'+
+      '<div style="padding:12px">'+
+      '<div class="section-label">Dependencies</div>'+(deps||'<p style="color:#9CA3AF;font-size:10px;font-style:italic">None recorded</p>')+
+      '<div class="section-label" style="margin-top:10px">Top Risks</div>'+(risks||'<p style="color:#9CA3AF;font-size:10px;font-style:italic">No red/amber risks</p>')+
       '</div></div>';
   }
-  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">' + cards + '</div>';
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">'+cards+'</div>';
 }
 
-function switchView(v, btn) {
-  currentView = v;
+// ── Actions ─────────────────────────────────────────────────────────────────
+function switchView(v,btn){
+  currentView=v;
   document.querySelectorAll(".nav-tab").forEach(function(t){t.classList.remove("active")});
   btn.classList.add("active");
   render();
 }
-function setSquad(i) { activeSquad=i; render(); }
-function setTab(idx,tab) { activeTabs[idx]=tab; render(); }
-function toggleUC(key) { openCards[key]=!openCards[key]; render(); }
-function toggleEdit(idx) { editingSquads[idx]=!editingSquads[idx]; render(); }
-function setConf(idx,v) { SQUADS[idx].confidence=v; render(); }
+function setSquad(i){activeSquad=i;render();}
+function setTab(idx,tab){activeTabs[idx]=tab;render();}
+function toggleUC(key){openCards[key]=!openCards[key];render();}
+function toggleEdit(idx){editingSquads[idx]=!editingSquads[idx];render();}
+function setConf(idx,v){SQUADS[idx].confidence=v;render();}
 
-function showToast(msg, isError) {
-  var t = document.getElementById("toast");
-  t.textContent = msg;
-  t.className = "toast show" + (isError?" error":"");
-  setTimeout(function(){t.classList.remove("show")}, 6000);
+function addUC(idx){
+  SQUADS[idx].useCases.push({name:"New Use Case",desc:"Describe this use case...",phases:[]});
+  openCards[idx+"-"+(SQUADS[idx].useCases.length-1)]=true;
+  render();
 }
-function setProgress(pct, msg) {
-  document.getElementById("progressBar").style.width = pct + "%";
-  if (msg) document.getElementById("progressSub").textContent = msg;
+function delUC(idx,u){
+  if(confirm("Remove this use case?")){ SQUADS[idx].useCases.splice(u,1); render(); }
+}
+function addRaid(idx){
+  SQUADS[idx].raid.push({id:"NEW",t:"R",desc:"Describe the risk or dependency",owner:"TBC",rag:"Amber",mit:"Mitigation action"});
+  render();
+}
+function delRaid(idx,r){
+  if(confirm("Remove this RAID item?")){ SQUADS[idx].raid.splice(r,1); render(); }
+}
+function addTeam(idx){
+  SQUADS[idx].team.push({n:"New Member",r:"Role"});
+  render();
+}
+function delTeam(idx,i){
+  if(confirm("Remove this team member?")){ SQUADS[idx].team.splice(i,1); render(); }
+}
+function addDep(idx){
+  SQUADS[idx].deps.push("New dependency");
+  render();
+}
+function delDep(idx,i){
+  SQUADS[idx].deps.splice(i,1); render();
 }
 
-function exportPPTX() {
-  if (typeof PptxGenJS === "undefined") {
-    showToast("PptxGenJS not loaded — check your internet connection and refresh.", true);
-    return;
-  }
-  var btn = document.getElementById("exportBtn");
-  btn.disabled = true;
-  btn.textContent = "Generating...";
+function showToast(msg,isError){
+  var t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className="toast show"+(isError?" error":"");
+  setTimeout(function(){t.classList.remove("show")},6000);
+}
+function setProgress(pct,msg){
+  document.getElementById("progressBar").style.width=pct+"%";
+  if(msg) document.getElementById("progressSub").textContent=msg;
+}
+
+// ── PPTX Export ─────────────────────────────────────────────────────────────
+function exportPPTX(){
+  if(typeof PptxGenJS==="undefined"){showToast("PptxGenJS not loaded — check internet connection and refresh.",true);return;}
+  var btn=document.getElementById("exportBtn");
+  btn.disabled=true; btn.textContent="Generating...";
   document.getElementById("progressOverlay").classList.add("show");
-  setProgress(5, "Setting up...");
-  setTimeout(function() { doExport(btn); }, 100);
+  setProgress(5,"Setting up...");
+  setTimeout(function(){doExport(btn);},100);
 }
 
-function doExport(btn) {
-  try {
-    var pres = new PptxGenJS();
-    pres.layout = "LAYOUT_WIDE";
-    pres.title = "PI2 Planning Workshop";
-    var W=13.3, H=7.5;
-    var PUR="6B00D7", PURD="4C1D95", GOLD="FCD34D", WH="FFFFFF", GR5="6B7280", GR7="374151";
-
-    function hdr(s,n) {
-      s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:0.1,w:2.7,h:0.25,align:"right"});
-    }
-    function phCol(t) { return {design:"A78BFA",build:"7C3AED",test:"0891B2",uat:"D97706",live:"10B981"}[t]||"7C3AED"; }
-
-    setProgress(10, "Cover slide...");
-
-    // Cover
-    var s1 = pres.addSlide();
-    s1.background={color:"0A0A1A"};
+function doExport(btn){
+  try{
+    var pres=new PptxGenJS();
+    pres.layout="LAYOUT_WIDE"; pres.title="PI2 Planning Workshop";
+    var W=13.3,H=7.5;
+    var PUR="6B00D7",PURD="4C1D95",GOLD="FCD34D",WH="FFFFFF",GR5="6B7280",GR7="374151";
+    function hdr(s,n){s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:.1,w:2.7,h:.25,align:"right"});}
+    function phCol(t){return{design:"A78BFA",build:"7C3AED",test:"0891B2",uat:"D97706",live:"10B981"}[t]||"7C3AED";}
+    setProgress(10,"Cover slide...");
+    var s1=pres.addSlide(); s1.background={color:"0A0A1A"};
     s1.addText("BT Business AI Ops.",{x:.5,y:.6,w:4.5,h:.5,fontSize:20,fontFace:"Calibri Light",color:WH});
     s1.addText("PI2 Planning\nWorkshop",{x:.5,y:1.15,w:4.5,h:1.8,fontSize:38,fontFace:"Calibri Light",color:WH});
     s1.addText("July 2026",{x:.5,y:3.0,w:4,h:.45,fontSize:18,fontFace:"Calibri Light",color:WH});
     s1.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
     s1.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
     s1.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
-
-    setProgress(20, "Agenda slides...");
-
-    // Day 1 Agenda
-    var s2 = pres.addSlide(); s2.background={color:WH}; hdr(s2,2);
+    setProgress(20,"Agenda...");
+    var s2=pres.addSlide(); s2.background={color:WH}; hdr(s2,2);
     s2.addText("PI Planning Agenda ( Day 1 )",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:"000000"});
     s2.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
-    var d1items=[
+    var d1=[
       {n:"01",type:"INTRO",dur:"60 min",title:"Pre-Planning",desc:"PI1 outcomes, Programme backlog, capacity per squad, architecture runway & enablers",time:"09:00-10:00",aud:"Team Leads, Scrum Master"},
       {n:"02",type:"OBJECTIVE",dur:"30 min",title:"Business Context & Vision",desc:"Business priorities, Key outcomes for PI2, Top Features and Acceptance criteria explained",time:"10:00-10:30",aud:"TBD"},
       {n:"03",type:"BREAK",dur:"10 min",title:"Break",desc:"10 min comfort break",time:"10:30-10:40",aud:"Everyone"},
-      {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan - Jul-Sep",time:"10:40-12:45",aud:"Everyone"},
+      {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan",time:"10:40-12:45",aud:"Everyone"},
       {n:"05",type:"BREAK",dur:"30 min",title:"Lunch Break",desc:"30 min lunchbreak",time:"12:45-13:15",aud:"Everyone"},
-      {n:"06",type:"PLENARY",dur:"60 min",title:"Squads Confirm: Plan of work for PI2 commitment",desc:"8-10 mins per team - Plans - showcase PI2 distributed over sprints",time:"13:15-14:00",aud:"Each team lead presents"},
+      {n:"06",type:"PLENARY",dur:"60 min",title:"Squads Confirm: Plan of work for PI2",desc:"8-10 mins per team, Plans, showcase PI2 distributed over sprints",time:"13:15-14:00",aud:"Each team lead presents"},
       {n:"07",type:"PLENARY",dur:"30 min",title:"PI Planning Acceptance Criteria",desc:"Captured at Jira level",time:"14:00-14:30",aud:"Team leads"}
     ];
-    var rowH=.72, sy=.96;
-    for (var ai=0;ai<d1items.length;ai++) {
-      var it=d1items[ai], y=sy+ai*(rowH+.08);
+    var rowH=.72,sy=.96;
+    for(var ai=0;ai<d1.length;ai++){
+      var it=d1[ai],y=sy+ai*(rowH+.08);
       var pc=it.type==="BREAK"?"9B9B9B":it.type==="BREAKOUT"?"00A550":it.type==="OBJECTIVE"?"0070C0":"7B2FBE";
       s2.addText(it.n,{x:.35,y:y,w:.65,h:rowH,fontSize:28,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
       s2.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
@@ -483,116 +556,80 @@ function doExport(btn) {
       s2.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
       s2.addText(it.time,{x:W-2.2,y:y,w:2.1,h:.3,fontSize:11,color:"000000",align:"right",valign:"bottom"});
       s2.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,color:GR5,italic:true,align:"right"});
-      if(ai<d1items.length-1) s2.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+      if(ai<d1.length-1) s2.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
     }
-
-    setProgress(35, "Squad slides...");
-
-    var slideNum = 3;
-    for (var qi=0;qi<SQUADS.length;qi++) {
-      var sq = SQUADS[qi];
-      var bg = sq.bg.replace("#","");
-      setProgress(35 + Math.round(qi/SQUADS.length*45), sq.name + "...");
-
-      // Squad overview
-      var ss = pres.addSlide(); ss.background={color:WH}; hdr(ss,slideNum++);
+    setProgress(35,"Squad slides...");
+    var slideNum=3;
+    for(var qi=0;qi<SQUADS.length;qi++){
+      var sq=SQUADS[qi],bg=sq.bg.replace("#","");
+      setProgress(35+Math.round(qi/SQUADS.length*45),sq.name+"...");
+      var ss=pres.addSlide(); ss.background={color:WH}; hdr(ss,slideNum++);
       ss.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:1.1,fill:{color:bg},line:{color:bg}});
       ss.addText(sq.name,{x:.35,y:0,w:10,h:1.1,fontSize:26,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
       ss.addText("Confidence: "+sq.confidence+"/5  -  "+sq.useCases.length+" use cases  -  "+sq.team.length+" members",{x:.35,y:.75,w:10,h:.3,fontSize:11,color:"DDD6FE"});
-      var colW=2.85, colH=1.55, cols=4;
-      for (var ui=0;ui<Math.min(sq.useCases.length,8);ui++) {
-        var uc=sq.useCases[ui];
-        var col=ui%cols, row=Math.floor(ui/cols);
-        var cx=.35+col*(colW+.12), cy=1.25+row*(colH+.12);
+      var colW=2.85,colH=1.55,cols=4;
+      for(var ui=0;ui<Math.min(sq.useCases.length,8);ui++){
+        var uc=sq.useCases[ui],col=ui%cols,row=Math.floor(ui/cols);
+        var cx=.35+col*(colW+.12),cy=1.25+row*(colH+.12);
         ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:colH,fill:{color:WH},line:{color:bg+"44",pt:1.2}});
         ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:.06,fill:{color:bg},line:{color:bg}});
         ss.addText(uc.name,{x:cx+.08,y:cy+.1,w:colW-.16,h:.35,fontSize:9.5,fontFace:"Calibri",color:bg,bold:true});
         ss.addText(uc.desc,{x:cx+.08,y:cy+.46,w:colW-.16,h:.98,fontSize:7.5,fontFace:"Calibri",color:GR7,valign:"top"});
       }
-
-      // RAID slide
-      var rs = pres.addSlide(); rs.background={color:WH}; hdr(rs,slideNum++);
+      var rs=pres.addSlide(); rs.background={color:WH}; hdr(rs,slideNum++);
       rs.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.7,fill:{color:bg},line:{color:bg}});
       rs.addText(sq.name+" - RAID Log",{x:.35,y:0,w:12.5,h:.7,fontSize:16,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
       var rcols=[{l:"ID",w:.8},{l:"Type",w:.6},{l:"Description",w:5.0},{l:"Owner",w:1.6},{l:"RAG",w:.6},{l:"Mitigation",w:4.1}];
-      var rcx=.35, rhy=.82, rrh=.72;
-      for (var ci=0;ci<rcols.length;ci++) {
-        rs.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fill:{color:PURD},line:{color:PURD}});
-        rs.addText(rcols[ci].l,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});
-        rcx+=rcols[ci].w;
-      }
-      for (var ri=0;ri<sq.raid.length;ri++) {
-        var r=sq.raid[ri], rry=rhy+.3+ri*rrh;
+      var rcx=.35,rhy=.82,rrh=.72;
+      for(var ci=0;ci<rcols.length;ci++){rs.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fill:{color:PURD},line:{color:PURD}});rs.addText(rcols[ci].l,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});rcx+=rcols[ci].w;}
+      for(var ri=0;ri<sq.raid.length;ri++){
+        var r=sq.raid[ri],rry=rhy+.3+ri*rrh;
         if(rry+rrh>H-.1) break;
-        var rbg=ri%2===0?WH:"EDE9FE";
-        rcx=.35;
+        var rbg=ri%2===0?WH:"EDE9FE"; rcx=.35;
         var rvals=[r.id,r.t,r.desc,r.owner,"",r.mit];
-        for (var ci2=0;ci2<rcols.length;ci2++) {
+        for(var ci2=0;ci2<rcols.length;ci2++){
           rs.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rry,w:rcols[ci2].w,h:rrh,fill:{color:rbg},line:{color:"DDDDDD",pt:.3}});
-          if(ci2===4) {
-            var ragc=r.rag==="Red"?"EF4444":r.rag==="Green"?"10B981":"F59E0B";
-            rs.addShape(pres.shapes.OVAL,{x:rcx+rcols[ci2].w/2-.1,y:rry+rrh/2-.1,w:.2,h:.2,fill:{color:ragc},line:{color:ragc}});
-          } else {
-            rs.addText(rvals[ci2],{x:rcx+.04,y:rry+.04,w:rcols[ci2].w-.08,h:rrh-.08,fontSize:ci2===2?7.5:8.5,fontFace:"Calibri",color:"374151",valign:"top"});
-          }
+          if(ci2===4){var ragc=r.rag==="Red"?"EF4444":r.rag==="Green"?"10B981":"F59E0B";rs.addShape(pres.shapes.OVAL,{x:rcx+rcols[ci2].w/2-.1,y:rry+rrh/2-.1,w:.2,h:.2,fill:{color:ragc},line:{color:ragc}});}
+          else rs.addText(rvals[ci2],{x:rcx+.04,y:rry+.04,w:rcols[ci2].w-.08,h:rrh-.08,fontSize:ci2===2?7.5:8.5,fontFace:"Calibri",color:"374151",valign:"top"});
           rcx+=rcols[ci2].w;
         }
       }
     }
-
-    setProgress(85, "Confidence vote...");
-
-    // Confidence Vote
-    var cv = pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
+    setProgress(88,"Confidence vote...");
+    var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
     cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
     cv.addText("Agile Team Members - Devs, QA, Analyst, Architect, PO, PM, RTE",{x:.35,y:.72,w:W-.7,h:.28,fontSize:11,color:GR5});
     var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
-    var cvcx=.35, cvhy=1.05, cvrh=.92;
-    for (var ci3=0;ci3<cvcols.length;ci3++) {
-      cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fill:{color:PUR},line:{color:PUR}});
-      cv.addText(cvcols[ci3].l,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});
-      cvcx+=cvcols[ci3].w;
-    }
-    for (var qi2=0;qi2<SQUADS.length;qi2++) {
-      var sq2=SQUADS[qi2], cvy=cvhy+.48+qi2*cvrh, cvbg=qi2%2===0?"EDE9FE":"F3F4F6";
-      cvcx=.35;
-      for (var ci4=0;ci4<cvcols.length;ci4++) {
-        cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:cvcols[ci4].w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});
-        cvcx+=cvcols[ci4].w;
-      }
+    var cvcx=.35,cvhy=1.05,cvrh=.92;
+    for(var ci3=0;ci3<cvcols.length;ci3++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(cvcols[ci3].l,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=cvcols[ci3].w;}
+    for(var qi2=0;qi2<SQUADS.length;qi2++){
+      var sq2=SQUADS[qi2],cvy=cvhy+.48+qi2*cvrh,cvbg=qi2%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
+      for(var ci4=0;ci4<cvcols.length;ci4++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:cvcols[ci4].w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=cvcols[ci4].w;}
       cv.addText(sq2.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
       cv.addText(sq2.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,fontFace:"Calibri",color:sq2.bg.replace("#",""),bold:true,align:"center"});
     }
-
-    setProgress(95, "Saving file...");
-
-    // Closing slide
-    var cls = pres.addSlide();
-    cls.background={color:PURD};
+    setProgress(95,"Saving...");
+    var cls=pres.addSlide(); cls.background={color:PURD};
     cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
     cls.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
     cls.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
     cls.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
-
-    pres.writeFile({fileName:"PI2_Planning_Workshop_July2026.pptx"}).then(function() {
+    pres.writeFile({fileName:"PI2_Planning_Workshop_July2026.pptx"}).then(function(){
       setProgress(100,"Done!");
       setTimeout(function(){
         document.getElementById("progressOverlay").classList.remove("show");
-        btn.disabled=false;
-        btn.innerHTML="&#8595; Export to PowerPoint";
+        btn.disabled=false; btn.innerHTML="&#8595; Export to PowerPoint";
         showToast("PowerPoint downloaded successfully!");
       },500);
     }).catch(function(err){
       document.getElementById("progressOverlay").classList.remove("show");
-      btn.disabled=false;
-      btn.innerHTML="&#8595; Export to PowerPoint";
-      showToast("Export failed: "+err.message, true);
+      btn.disabled=false; btn.innerHTML="&#8595; Export to PowerPoint";
+      showToast("Export failed: "+err.message,true);
     });
-  } catch(err) {
+  }catch(err){
     document.getElementById("progressOverlay").classList.remove("show");
-    btn.disabled=false;
-    btn.innerHTML="&#8595; Export to PowerPoint";
-    showToast("Export failed: "+err.message, true);
+    btn.disabled=false; btn.innerHTML="&#8595; Export to PowerPoint";
+    showToast("Export failed: "+err.message,true);
   }
 }
 
