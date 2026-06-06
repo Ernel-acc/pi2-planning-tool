@@ -515,15 +515,52 @@ function exportPPTX(){
   setTimeout(function(){doExport(btn);},100);
 }
 
+// This replaces just the doExport function in index.html
+// Full 20-slide deck matching PI_Planning_WIP.pptx structure
+
 function doExport(btn){
   try{
     var pres=new PptxGenJS();
     pres.layout="LAYOUT_WIDE"; pres.title="PI2 Planning Workshop";
     var W=13.3,H=7.5;
-    var PUR="6B00D7",PURD="4C1D95",GOLD="FCD34D",WH="FFFFFF",GR5="6B7280",GR7="374151";
-    function hdr(s,n){s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:.1,w:2.7,h:.25,align:"right"});}
+    var PUR="6B00D7",PURD="4C1D95",PURM="7B2FBE",PURL="EDE9FE",GOLD="FCD34D";
+    var WH="FFFFFF",GR1="F3F4F6",GR5="6B7280",GR7="374151",BLK="000000";
+
+    function hdr(s,n){
+      s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:.1,w:2.7,h:.25,align:"right"});
+    }
     function phCol(t){return{design:"A78BFA",build:"7C3AED",test:"0891B2",uat:"D97706",live:"10B981"}[t]||"7C3AED";}
-    setProgress(10,"Cover slide...");
+    function interstitial(s,text,n){
+      s.background={color:PURD};
+      s.addText(text,{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:36,fontFace:"Calibri Light",color:WH});
+      s.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
+      s.addShape(pres.shapes.RECTANGLE,{x:W-.22,y:H-.28,w:.22,h:.28,fill:{color:GOLD},line:{color:GOLD}});
+      hdr(s,n);
+    }
+    function agendaSlide(s,title,items,n){
+      s.background={color:WH}; hdr(s,n);
+      s.addText(title,{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
+      var rowH=.72,sy=.96;
+      for(var ai=0;ai<items.length;ai++){
+        var it=items[ai],y=sy+ai*(rowH+.08);
+        var pc=it.type==="BREAK"?"9B9B9B":it.type==="BREAKOUT"?"00A550":it.type==="OBJECTIVE"?"0070C0":it.type==="BACKDROP"?GOLD:PURM;
+        var tc=it.type==="BACKDROP"?BLK:WH;
+        s.addText(it.n,{x:.35,y:y,w:.65,h:rowH,fontSize:28,fontFace:"Calibri",color:BLK,bold:true,valign:"middle"});
+        s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
+        s.addText(it.type,{x:1.04,y:y+.06,w:.82,h:.22,fontSize:7,color:tc,bold:true,align:"center",valign:"middle",margin:0});
+        s.addText(it.dur,{x:1.04,y:y+.31,w:.82,h:.2,fontSize:9,color:GR5,align:"center"});
+        s.addText(it.title,{x:1.92,y:y,w:7.0,h:.32,fontSize:14,fontFace:"Calibri",color:BLK,bold:true,valign:"bottom"});
+        s.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
+        s.addText(it.time,{x:W-2.2,y:y,w:2.1,h:.3,fontSize:11,color:BLK,align:"right",valign:"bottom"});
+        s.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,color:GR5,italic:true,align:"right"});
+        if(ai<items.length-1) s.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+      }
+    }
+
+    setProgress(5,"Slide 1: Cover...");
+
+    // SLIDE 1 — Cover
     var s1=pres.addSlide(); s1.background={color:"0A0A1A"};
     s1.addText("BT Business AI Ops.",{x:.5,y:.6,w:4.5,h:.5,fontSize:20,fontFace:"Calibri Light",color:WH});
     s1.addText("PI2 Planning\nWorkshop",{x:.5,y:1.15,w:4.5,h:1.8,fontSize:38,fontFace:"Calibri Light",color:WH});
@@ -531,95 +568,311 @@ function doExport(btn){
     s1.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
     s1.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
     s1.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
-    setProgress(20,"Agenda...");
-    var s2=pres.addSlide(); s2.background={color:WH}; hdr(s2,2);
-    s2.addText("PI Planning Agenda ( Day 1 )",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:"000000"});
-    s2.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
-    var d1=[
-      {n:"01",type:"INTRO",dur:"60 min",title:"Pre-Planning",desc:"PI1 outcomes, Programme backlog, capacity per squad, architecture runway & enablers",time:"09:00-10:00",aud:"Team Leads, Scrum Master"},
-      {n:"02",type:"OBJECTIVE",dur:"30 min",title:"Business Context & Vision",desc:"Business priorities, Key outcomes for PI2, Top Features and Acceptance criteria explained",time:"10:00-10:30",aud:"TBD"},
-      {n:"03",type:"BREAK",dur:"10 min",title:"Break",desc:"10 min comfort break",time:"10:30-10:40",aud:"Everyone"},
-      {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan",time:"10:40-12:45",aud:"Everyone"},
-      {n:"05",type:"BREAK",dur:"30 min",title:"Lunch Break",desc:"30 min lunchbreak",time:"12:45-13:15",aud:"Everyone"},
-      {n:"06",type:"PLENARY",dur:"60 min",title:"Squads Confirm: Plan of work for PI2",desc:"8-10 mins per team, Plans, showcase PI2 distributed over sprints",time:"13:15-14:00",aud:"Each team lead presents"},
-      {n:"07",type:"PLENARY",dur:"30 min",title:"PI Planning Acceptance Criteria",desc:"Captured at Jira level",time:"14:00-14:30",aud:"Team leads"}
-    ];
-    var rowH=.72,sy=.96;
-    for(var ai=0;ai<d1.length;ai++){
-      var it=d1[ai],y=sy+ai*(rowH+.08);
-      var pc=it.type==="BREAK"?"9B9B9B":it.type==="BREAKOUT"?"00A550":it.type==="OBJECTIVE"?"0070C0":"7B2FBE";
-      s2.addText(it.n,{x:.35,y:y,w:.65,h:rowH,fontSize:28,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
-      s2.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
-      s2.addText(it.type,{x:1.04,y:y+.06,w:.82,h:.22,fontSize:7,color:WH,bold:true,align:"center",valign:"middle",margin:0});
-      s2.addText(it.dur,{x:1.04,y:y+.31,w:.82,h:.2,fontSize:9,color:GR5,align:"center"});
-      s2.addText(it.title,{x:1.92,y:y,w:7.0,h:.32,fontSize:14,fontFace:"Calibri",color:"000000",bold:true,valign:"bottom"});
-      s2.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
-      s2.addText(it.time,{x:W-2.2,y:y,w:2.1,h:.3,fontSize:11,color:"000000",align:"right",valign:"bottom"});
-      s2.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,color:GR5,italic:true,align:"right"});
-      if(ai<d1.length-1) s2.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+
+    setProgress(10,"Slide 2: Day 1 Agenda...");
+
+    // SLIDE 2 — Day 1 Agenda
+    agendaSlide(pres.addSlide(),"PI Planning Agenda ( Day 1 )",[
+      {n:"01",type:"INTRO",   dur:"60 min",    title:"Pre-Planning",                          desc:"PI 1 outcome, Program backlog, capacity per squad, architecture runway & enablers, Dependency mapping draft", time:"09:00 – 10:00",aud:"Team Leads, Scrum Master"},
+      {n:"02",type:"OBJECTIVE",dur:"60 min",   title:"Business Context & Vision",             desc:"Business priorities, Key outcomes expected from PI 2, Top Features and Acceptance explained",                  time:"10:00 – 10:30",aud:"TBD"},
+      {n:"03",type:"BREAK",  dur:"10 min",     title:"Break",                                 desc:"10 min break",                                                                                                  time:"10:30 – 10:40",aud:"Everyone"},
+      {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",    desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan and align sprint wise for Q2",  time:"10:40 – 12:45",aud:"Everyone"},
+      {n:"05",type:"BREAK",  dur:"30 min",     title:"Lunch Break",                           desc:"30 mins lunchbreak",                                                                                            time:"12:45 – 13:15",aud:"Everyone"},
+      {n:"06",type:"PLENARY",dur:"60 min",     title:"Squads Confirm: A rough plan of work for quarter P2 commitment",desc:"8-10 mins per team  \xb7  Plans  \xb7  showcase their P2 distributed over sprints",   time:"13:15 – 14:00",aud:"Each team lead presents"},
+      {n:"07",type:"PLENARY",dur:"30 min",     title:"PI Planning Acceptance Criteria",       desc:"Captured at Jira level",                                                                                        time:"14:00 – 14:30",aud:"Team leads"}
+    ],2);
+
+    setProgress(15,"Slide 3: Day 2 Agenda...");
+
+    // SLIDE 3 — Day 2 Agenda
+    agendaSlide(pres.addSlide(),"PI Planning Agenda ( Day 2 )",[
+      {n:"08",type:"INTRO",  dur:"60 min",title:"Risk, Dependencies, Issues to be mapped",desc:"Team to mark and highlight the possible risk, issues, wait items.", time:"09:00 – 10:00",aud:"TBD"},
+      {n:"09",type:"INTRO",  dur:"2 hrs",  title:"RAID to be discussed",                  desc:"Team commit to PI goals, Confidence vote",                          time:"10:00 – 10:30",aud:"TBD"},
+      {n:"10",type:"BREAK",  dur:"10 min", title:"Break",                                 desc:"10 min break",                                                      time:"10:30 – 10:40",aud:"Everyone"},
+      {n:"11",type:"BACKDROP",dur:"30 min",title:"Clean the Program Board",               desc:"Non-relevant information to be cleaned up",                         time:"10:40 – 12:45",aud:"Everyone"},
+      {n:"12",type:"BREAK",  dur:"30 min", title:"Lunch Break",                           desc:"30 mins lunch break",                                               time:"12:45 – 13:15",aud:"Everyone"},
+      {n:"13",type:"PLENARY",dur:"45 min", title:"Final Plan review + Confidence Vote",   desc:"Discuss on Risk, ownership, Accepted, Mitigated",                   time:"13:15 – 14:00",aud:"Each team lead presents"},
+      {n:"14",type:"PLENARY",dur:"30 min", title:"Left free for any fallouts",            desc:"Anything overstretched can be compensated",                         time:"14:00 – 14:30",aud:"Team leads"}
+    ],3);
+
+    setProgress(20,"Slide 4: Roadmap...");
+
+    // SLIDE 4 — Roadmap placeholder
+    var s4=pres.addSlide(); s4.background={color:WH}; hdr(s4,4);
+    s4.addText("Project timelines / Roadmap / related structure to be put. \u2013 60 min",{x:.35,y:2.8,w:W-.7,h:.8,fontSize:28,fontFace:"Calibri Light",color:BLK});
+
+    setProgress(25,"Slide 5: PI1 Recap...");
+
+    // SLIDE 5 — PI1 Recap
+    var s5=pres.addSlide(); s5.background={color:WH}; hdr(s5,5);
+    s5.addText("Recap \u2013 PI1 Commitment \u2013 Outcome",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    s5.addText("See attached PI1 Gantt / summary for full detail.",{x:.35,y:1,w:W-.7,h:.5,fontSize:14,color:GR5});
+
+    setProgress(30,"Slide 6: Business Context...");
+
+    // SLIDE 6 — Business Context
+    var s6=pres.addSlide(); s6.background={color:WH}; hdr(s6,6);
+    s6.addText("Business Context & Vision \u2013 60 min",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    s6.addShape(pres.shapes.RECTANGLE,{x:.35,y:.82,w:1.05,h:1.2,fill:{color:PURD},line:{color:PURD}});
+    s6.addText("P2-\nRequirement",{x:.35,y:.82,w:1.05,h:1.2,fontSize:10,color:WH,bold:true,align:"center",valign:"middle"});
+    s6.addShape(pres.shapes.RECTANGLE,{x:1.4,y:.82,w:W-1.75,h:1.2,fill:{color:GR1},line:{color:"DDDDDD"}});
+    s6.addText("The goal of PI2 Planning is to baseline and align the Programme Increment for BT AI Ops by locking the scope, outcomes, delivery cadence, and acceptance criteria required to confidently move into execution.",{x:1.5,y:.88,w:W-1.9,h:1.08,fontSize:11.5,color:GR7,valign:"middle"});
+    var prios=["Enhanced Feature","Automation 1","Automation 2","Data Foundation","Architecture","TBD"];
+    for(var pi=0;pi<prios.length;pi++){
+      var py=2.18+pi*.76,pbg=pi%2===0?GR1:WH;
+      s6.addShape(pres.shapes.RECTANGLE,{x:.35,y:py,w:.45,h:.76,fill:{color:PURD},line:{color:PURD}});
+      s6.addText(String(pi+1),{x:.35,y:py,w:.45,h:.76,fontSize:14,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+      s6.addShape(pres.shapes.RECTANGLE,{x:.8,y:py,w:W-1.15,h:.76,fill:{color:pbg},line:{color:"DDDDDD"}});
+      s6.addText(prios[pi],{x:.9,y:py+.12,w:W-1.3,h:.3,fontSize:12,color:BLK,bold:true});
     }
-    setProgress(35,"Squad slides...");
-    var slideNum=3;
-    for(var qi=0;qi<SQUADS.length;qi++){
-      var sq=SQUADS[qi],bg=sq.bg.replace("#","");
-      setProgress(35+Math.round(qi/SQUADS.length*45),sq.name+"...");
-      var ss=pres.addSlide(); ss.background={color:WH}; hdr(ss,slideNum++);
-      ss.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:1.1,fill:{color:bg},line:{color:bg}});
-      ss.addText(sq.name,{x:.35,y:0,w:10,h:1.1,fontSize:26,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
-      ss.addText("Confidence: "+sq.confidence+"/5  -  "+sq.useCases.length+" use cases  -  "+sq.team.length+" members",{x:.35,y:.75,w:10,h:.3,fontSize:11,color:"DDD6FE"});
-      var colW=2.85,colH=1.55,cols=4;
-      for(var ui=0;ui<Math.min(sq.useCases.length,8);ui++){
-        var uc=sq.useCases[ui],col=ui%cols,row=Math.floor(ui/cols);
-        var cx=.35+col*(colW+.12),cy=1.25+row*(colH+.12);
-        ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:colH,fill:{color:WH},line:{color:bg+"44",pt:1.2}});
-        ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:.06,fill:{color:bg},line:{color:bg}});
-        ss.addText(uc.name,{x:cx+.08,y:cy+.1,w:colW-.16,h:.35,fontSize:9.5,fontFace:"Calibri",color:bg,bold:true});
-        ss.addText(uc.desc,{x:cx+.08,y:cy+.46,w:colW-.16,h:.98,fontSize:7.5,fontFace:"Calibri",color:GR7,valign:"top"});
+
+    setProgress(35,"Slide 7: Tea Break...");
+
+    // SLIDE 7 — Tea Break
+    interstitial(pres.addSlide(),"Tea-Break \u2013 10 min",7);
+
+    setProgress(38,"Slide 8: Squad Breakout...");
+
+    // SLIDE 8 — Squad Breakout
+    var s8=pres.addSlide(); s8.background={color:PURL}; hdr(s8,8);
+    s8.addText("Squad \u2013 Breakout Session \u2013 2 hrs",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    var sqColors={"Enhanced Features Squad":"7C3AED","Automation Squad 1":"0891B2","Automation Squad 2":"0D9488","Data Foundations Squad":"D97706","Architecture Squad":"BE185D"};
+    var rowH8=.84, sy8=.88, colW8=(W-.7)/2-.1;
+    for(var si=0;si<SQUADS.length;si++){
+      var sy8i=sy8+si*(rowH8+.07), sqc=SQUADS[si].bg.replace("#","");
+      s8.addShape(pres.shapes.RECTANGLE,{x:.35,y:sy8i,w:.12,h:rowH8,fill:{color:sqc},line:{color:sqc}});
+      s8.addShape(pres.shapes.RECTANGLE,{x:.47,y:sy8i,w:colW8-.12,h:rowH8,fill:{color:"F5F0FF"},line:{color:"E0D5EE",pt:.4}});
+      s8.addText(SQUADS[si].name,{x:.47,y:sy8i,w:colW8-.12,h:rowH8,fontSize:14,color:BLK,bold:true,align:"center",valign:"middle"});
+      s8.addShape(pres.shapes.RECTANGLE,{x:colW8+.55,y:sy8i,w:.12,h:rowH8,fill:{color:sqc},line:{color:sqc}});
+      s8.addShape(pres.shapes.RECTANGLE,{x:colW8+.67,y:sy8i,w:colW8-.12,h:rowH8,fill:{color:"F5F0FF"},line:{color:"E0D5EE",pt:.4}});
+      s8.addText("PI2 Planning Board \u2013 Link to be confirmed",{x:colW8+.67,y:sy8i,w:colW8-.12,h:rowH8,fontSize:11,color:PURM,align:"center",valign:"middle"});
+    }
+    s8.addText("Modernised Managed Services",{x:W-4,y:H-.5,w:3.7,h:.35,fontSize:14,color:BLK,bold:true,align:"right"});
+
+    setProgress(42,"Slide 9: Lunch...");
+
+    // SLIDE 9 — Lunch Break
+    interstitial(pres.addSlide(),"Lunch Break \u2013 30 min",9);
+
+    setProgress(45,"Slide 10: Squads Confirm...");
+
+    // SLIDE 10 — Squads Confirm
+    var s10=pres.addSlide(); s10.background={color:WH}; hdr(s10,10);
+    s10.addText("Squads Confirm \u2013 60 min",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    s10.addText("Squads come with a rough plan against the requirement.",{x:.35,y:.68,w:W-.7,h:.28,fontSize:11,color:GR5});
+    var cfgs=[{x:.3,y:1.1,w:3.85},{x:4.72,y:1.1,w:3.85},{x:9.14,y:1.1,w:3.85},{x:1.5,y:4.35,w:4.6},{x:6.7,y:4.35,w:4.6}];
+    var cardH=2.9;
+    for(var ci=0;ci<SQUADS.length;ci++){
+      var cfg=cfgs[ci], sqc2=SQUADS[ci].bg.replace("#","");
+      s10.addShape(pres.shapes.OVAL,{x:cfg.x+cfg.w/2-.26,y:cfg.y-.35,w:.52,h:.52,fill:{color:sqc2},line:{color:sqc2}});
+      s10.addText(String(ci+1),{x:cfg.x+cfg.w/2-.26,y:cfg.y-.35,w:.52,h:.52,fontSize:14,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+      s10.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cfg.x,y:cfg.y,w:cfg.w,h:cardH,fill:{color:WH},line:{color:"CCCCCC",pt:.8},rectRadius:.12});
+      s10.addText(SQUADS[ci].name,{x:cfg.x,y:cfg.y+.1,w:cfg.w,h:.38,fontSize:13,color:BLK,bold:true,align:"center"});
+      s10.addShape(pres.shapes.LINE,{x:cfg.x+.15,y:cfg.y+.58,w:cfg.w-.3,h:0,line:{color:"AAAAAA",pt:.5,dashType:"dash"}});
+      s10.addText("Requirement",{x:cfg.x+.1,y:cfg.y+.65,w:.9,h:.3,fontSize:9,color:BLK,bold:true});
+      s10.addShape(pres.shapes.RECTANGLE,{x:cfg.x+.1,y:cfg.y+.7,w:cfg.w-.2,h:.62,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s10.addText("Given by Business",{x:cfg.x+.1,y:cfg.y+.7,w:cfg.w-.2,h:.62,fontSize:9.5,color:GR5,align:"center",valign:"middle"});
+      s10.addShape(pres.shapes.LINE,{x:cfg.x+.15,y:cfg.y+1.42,w:cfg.w-.3,h:0,line:{color:"AAAAAA",pt:.5,dashType:"dash"}});
+      s10.addText("Outcome",{x:cfg.x+.1,y:cfg.y+1.5,w:.9,h:.3,fontSize:9,color:BLK,bold:true});
+      s10.addShape(pres.shapes.RECTANGLE,{x:cfg.x+.1,y:cfg.y+1.52,w:cfg.w-.2,h:1.2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s10.addText("Decided by Squad",{x:cfg.x+.1,y:cfg.y+1.52,w:cfg.w-.2,h:1.2,fontSize:9.5,color:GR5,align:"center",valign:"middle"});
+    }
+
+    setProgress(52,"Slide 11-12: Entry Criteria...");
+
+    // SLIDE 11 — Entry Criteria visual
+    var s11=pres.addSlide(); s11.background={color:WH}; hdr(s11,11);
+    s11.addText("Entry Criteria for PI 2 Planning",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    s11.addText("PI2 Planning should start only once, design is complete, data foundations are stable, backlog is refined and dependencies are under control / started to action.",{x:.35,y:.72,w:W-.7,h:.35,fontSize:10.5,color:GR7});
+    s11.addShape(pres.shapes.RECTANGLE,{x:.35,y:1.3,w:3.9,h:.65,fill:{color:"D4E609"},line:{color:"C0D000",pt:.8}});
+    s11.addText("Design",{x:.35,y:1.3,w:3.9,h:.65,fontSize:16,color:BLK,bold:true,align:"center",valign:"middle"});
+    s11.addShape(pres.shapes.RECTANGLE,{x:4.65,y:1.3,w:3.9,h:.65,fill:{color:"C6EFCE"},line:{color:"70AD47",pt:.8}});
+    s11.addText("Data Foundation",{x:4.65,y:1.3,w:3.9,h:.65,fontSize:16,color:BLK,bold:true,align:"center",valign:"middle"});
+    s11.addShape(pres.shapes.RECTANGLE,{x:.35,y:2.1,w:3.9,h:3.2,fill:{color:GR1},line:{color:"CCCCCC"}});
+    s11.addShape(pres.shapes.RECTANGLE,{x:4.65,y:2.1,w:3.9,h:3.2,fill:{color:GR1},line:{color:"CCCCCC"}});
+    s11.addShape(pres.shapes.RECTANGLE,{x:8.95,y:1.3,w:4.05,h:.65,fill:{color:PURD},line:{color:PURD}});
+    s11.addText("Dependencies \u2013 Acc_AIOPS \u2013 Agile Planning for Development",{x:8.95,y:1.3,w:4.05,h:.65,fontSize:9.5,color:WH,bold:true,align:"center",valign:"middle"});
+    var depTeams=[["AIOPS2 \u2013 Enhanced Features","0","2","2","0","4"],["AIOPS3 \u2013 Automation 1","1","0","1","0","2"],["AIOPS4 \u2013 Automation 2","0","1","1","4","6"],["AIOPS5 \u2013 Data & Integration","0","3","0","0","3"],["AIOPS6 \u2013 Architecture","0","4","3","0","7"],["Total","1","10","7","4","22"]];
+    var dCols=[1.6,.45,.45,.38,.45,.42], dtx=8.95, dthy=1.95;
+    var dHeaders=["Team","Resolved","Backlog","New","Owned","Total"];
+    var dcx=dtx;
+    for(var dhi=0;dhi<dHeaders.length;dhi++){s11.addShape(pres.shapes.RECTANGLE,{x:dcx,y:dthy,w:dCols[dhi],h:.28,fill:{color:PURD},line:{color:PURD}});s11.addText(dHeaders[dhi],{x:dcx,y:dthy,w:dCols[dhi],h:.28,fontSize:7,color:WH,bold:true,align:"center",valign:"middle",margin:0});dcx+=dCols[dhi];}
+    for(var dri=0;dri<depTeams.length;dri++){
+      var dry=dthy+.28+dri*.34,drbg=dri===depTeams.length-1?PURL:(dri%2===0?WH:GR1); dcx=dtx;
+      for(var dci=0;dci<depTeams[dri].length;dci++){
+        s11.addShape(pres.shapes.RECTANGLE,{x:dcx,y:dry,w:dCols[dci],h:.34,fill:{color:drbg},line:{color:"DDDDDD",pt:.2}});
+        s11.addText(depTeams[dri][dci],{x:dcx,y:dry,w:dCols[dci],h:.34,fontSize:7,color:dri===depTeams.length-1?PURD:(dci>0?"0070C0":GR7),bold:dri===depTeams.length-1,align:dci===0?"left":"center",valign:"middle",margin:[0,0,0,dci===0?3:0]});
+        dcx+=dCols[dci];
       }
-      var rs=pres.addSlide(); rs.background={color:WH}; hdr(rs,slideNum++);
-      rs.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.7,fill:{color:bg},line:{color:bg}});
-      rs.addText(sq.name+" - RAID Log",{x:.35,y:0,w:12.5,h:.7,fontSize:16,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
-      var rcols=[{l:"ID",w:.8},{l:"Type",w:.6},{l:"Description",w:5.0},{l:"Owner",w:1.6},{l:"RAG",w:.6},{l:"Mitigation",w:4.1}];
-      var rcx=.35,rhy=.82,rrh=.72;
-      for(var ci=0;ci<rcols.length;ci++){rs.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fill:{color:PURD},line:{color:PURD}});rs.addText(rcols[ci].l,{x:rcx,y:rhy,w:rcols[ci].w,h:.3,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});rcx+=rcols[ci].w;}
-      for(var ri=0;ri<sq.raid.length;ri++){
-        var r=sq.raid[ri],rry=rhy+.3+ri*rrh;
-        if(rry+rrh>H-.1) break;
-        var rbg=ri%2===0?WH:"EDE9FE"; rcx=.35;
-        var rvals=[r.id,r.t,r.desc,r.owner,"",r.mit];
-        for(var ci2=0;ci2<rcols.length;ci2++){
-          rs.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rry,w:rcols[ci2].w,h:rrh,fill:{color:rbg},line:{color:"DDDDDD",pt:.3}});
-          if(ci2===4){var ragc=r.rag==="Red"?"EF4444":r.rag==="Green"?"10B981":"F59E0B";rs.addShape(pres.shapes.OVAL,{x:rcx+rcols[ci2].w/2-.1,y:rry+rrh/2-.1,w:.2,h:.2,fill:{color:ragc},line:{color:ragc}});}
-          else rs.addText(rvals[ci2],{x:rcx+.04,y:rry+.04,w:rcols[ci2].w-.08,h:rrh-.08,fontSize:ci2===2?7.5:8.5,fontFace:"Calibri",color:"374151",valign:"top"});
-          rcx+=rcols[ci2].w;
+    }
+
+    // SLIDE 12 — Entry Criteria process
+    var s12=pres.addSlide(); s12.background={color:WH}; hdr(s12,12);
+    s12.addText("Entry Criteria for PI 2 Planning",{x:.35,y:.1,w:W-.7,h:.62,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+    s12.addText("Once this is clear, we move to next.",{x:.35,y:.72,w:W-.7,h:.25,fontSize:10.5,color:GR7});
+    var steps=[
+      {n:"[1] BUSINESS MILESTONES DEFINITION",detail:"",output:"OUTPUT: Key Milestones (Release dates, Compliance targets, Major deliveries)",h:.6},
+      {n:"[2] FEATURE IDENTIFICATION & PRIORITIZATION",detail:"(Map features to milestones + Business Value scoring)",output:"OUTPUT: Prioritized Feature List",h:.62},
+      {n:"[3] RISK & DEPENDENCY IDENTIFICATION",detail:"\u2192 Risk (Uncertainty / blockers)  \u2192  Dependency (Team/System reliance)\n\u2193 Decision: Is risk high or dependency unresolved?\n\u2192 Yes \u2192 Escalate / ROAM     \u2192 No \u2192 Proceed",output:"OUTPUT: Dependency Map + Risk update in JIRA",h:1.05},
+      {n:"[4] STORY BREAKDOWN (TEAM LEVEL)\n  1 SP = 1 Day approx.",detail:"\u2192 Story is INVEST compliant\n\u2192 Estimated (Story Points / Capacity aligned)\n\u2193 Decision: Is story actionable?\n\u2192 No \u2192 Refine further     \u2192 Yes \u2192 Proceed",output:"OUTPUT: Sprint-ready stories, put in respective sprints from Sp7-Sp12 on JIRA board.",h:1.12},
+      {n:"[5] ACCEPTANCE CRITERIA DEFINITION",detail:"(Clear, testable, business-aligned conditions)",output:"OUTPUT: Definition of Ready-Done stories",h:.62}
+    ];
+    var scy=1.06,sgap=.1;
+    for(var sti=0;sti<steps.length;sti++){
+      var st=steps[sti],sh=st.h;
+      s12.addShape(pres.shapes.RECTANGLE,{x:.35,y:scy,w:3.55,h:sh,fill:{color:PURL},line:{color:PURL}});
+      s12.addText(st.n,{x:.38,y:scy+.04,w:3.5,h:sh-.08,fontSize:9,color:GR7,valign:"top"});
+      if(st.detail) s12.addText(st.detail,{x:3.98,y:scy,w:4.5,h:sh,fontSize:9,color:GOLD,valign:"middle"});
+      s12.addShape(pres.shapes.RECTANGLE,{x:8.58,y:scy,w:4.4,h:sh,fill:{color:PURL},line:{color:PURL}});
+      s12.addText(st.output,{x:8.62,y:scy+.04,w:4.3,h:sh-.08,fontSize:9,color:GR7,valign:"top"});
+      scy+=sh+sgap;
+    }
+
+    setProgress(60,"Slide 13: Day 1 Ends...");
+
+    // SLIDE 13 — Day 1 Ends
+    interstitial(pres.addSlide(),"Day 1 Ends",13);
+
+    setProgress(63,"Slide 14: RAID Log...");
+
+    // SLIDE 14 — RAID Log (all squads combined)
+    var s14=pres.addSlide(); s14.background={color:WH}; hdr(s14,14);
+    s14.addText("RAID Log",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+    var rcols14=[{l:"R/A/I/D\nType",w:1.0},{l:"Title",w:1.8},{l:"Description",w:4.0},{l:"Owner",w:1.3},{l:"Accepted/\nMitigated",w:1.2},{l:"Due Date",w:1.0},{l:"Comment",w:2.7}];
+    var rcx14=.35,rhy14=.82,rrh14=.62;
+    for(var rci=0;rci<rcols14.length;rci++){s14.addShape(pres.shapes.RECTANGLE,{x:rcx14,y:rhy14,w:rcols14[rci].w,h:.45,fill:{color:PURD},line:{color:PURD}});s14.addText(rcols14[rci].l,{x:rcx14,y:rhy14,w:rcols14[rci].w,h:.45,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});rcx14+=rcols14[rci].w;}
+    var allRaid=[];
+    for(var ri14=0;ri14<SQUADS.length;ri14++){
+      for(var rj=0;rj<SQUADS[ri14].raid.length;rj++){
+        var rr=SQUADS[ri14].raid[rj];
+        allRaid.push([rr.t,rr.id,rr.desc,rr.owner,rr.rag==="Amber"?"Pending":rr.rag==="Green"?"Mitigated":"Critical","TBC",rr.mit]);
+      }
+    }
+    for(var rai=0;rai<Math.min(allRaid.length,8);rai++){
+      var rry14=rhy14+.45+rai*rrh14,rrbg=rai%2===0?WH:PURL; rcx14=.35;
+      for(var rci2=0;rci2<rcols14.length;rci2++){
+        s14.addShape(pres.shapes.RECTANGLE,{x:rcx14,y:rry14,w:rcols14[rci2].w,h:rrh14,fill:{color:rrbg},line:{color:"DDDDDD",pt:.3}});
+        s14.addText(allRaid[rai][rci2],{x:rcx14+.04,y:rry14+.04,w:rcols14[rci2].w-.08,h:rrh14-.08,fontSize:rci2===2?7.5:8.5,color:GR7,valign:"top"});
+        rcx14+=rcols14[rci2].w;
+      }
+    }
+
+    setProgress(70,"Slides 15-16: Deliverables...");
+
+    // SLIDE 15 — Expected Deliverables p1
+    var s15=pres.addSlide(); s15.background={color:WH}; hdr(s15,15);
+    s15.addText("PI 2 Expected Deliverables",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    var dcols15=[{l:"PI 2\nWorkstream",w:1.4},{l:"Use Case Delivered",w:2.2},{l:"Features",w:3.4},{l:"Deliverables",w:W-1.4-2.2-3.4-.7}];
+    var dehY=.78, dehH=.38, dex=.35, dey=dehY+dehH;
+    for(var dci15=0;dci15<dcols15.length;dci15++){s15.addShape(pres.shapes.RECTANGLE,{x:dex,y:dehY,w:dcols15[dci15].w,h:dehH,fill:{color:PURD},line:{color:PURD}});s15.addText(dcols15[dci15].l,{x:dex,y:dehY,w:dcols15[dci15].w,h:dehH,fontSize:9.5,color:WH,bold:true,align:"center",valign:"middle",margin:0});dex+=dcols15[dci15].w;}
+    var delGroups=[
+      {ws:"Enhanced\nFeatures",ucs:"UC020 Ticket Summarisation\nUC021 Resolver Auto-Task\nUC024 Auto-closure\nUC026 Email Mgmt\nUC018 KX Troubleshoot",feats:["Feature 1","Feature 2","Feature 3","Feature 4","Feature 5"],h:2.8},
+      {ws:"Automation 1",ucs:"UC016 Auto-Test Diagnostics\nUC030 Repeatable Automations",feats:["Feature 1","Feature 2"],h:1.1},
+      {ws:"Automation 2",ucs:"UC021 Resolver Task\nUC024 Auto-closure\nUC029 PWR Automation\nUC026 Email Mgmt",feats:["Feature 1","Feature 2","Feature 3","Feature 4"],h:1.9}
+    ];
+    var deliverableText="Use Case requirements document\nUse Case solution steer document\nE2E HLD document\nLow Level Design - System Config & Integration\nTechnical build document\nTest strategy and approach\nTest exit report\nRun books and code to be deployed\nWarranty Plan\nOperational Readiness Checklist\nWarranty Closure Report";
+    var cury=dey;
+    for(var gi=0;gi<delGroups.length;gi++){
+      var dg=delGroups[gi],gh=dg.h;
+      s15.addShape(pres.shapes.RECTANGLE,{x:.35,y:cury,w:dcols15[0].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s15.addText(dg.ws,{x:.35,y:cury,w:dcols15[0].w,h:gh,fontSize:9,color:GR7,align:"center",valign:"middle"});
+      s15.addShape(pres.shapes.RECTANGLE,{x:.35+dcols15[0].w,y:cury,w:dcols15[1].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s15.addText(dg.ucs,{x:.35+dcols15[0].w+.05,y:cury+.05,w:dcols15[1].w-.1,h:gh-.1,fontSize:8.5,color:GR7,valign:"top"});
+      s15.addShape(pres.shapes.RECTANGLE,{x:.35+dcols15[0].w+dcols15[1].w,y:cury,w:dcols15[2].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s15.addText(dg.feats.join("\n"),{x:.35+dcols15[0].w+dcols15[1].w+.05,y:cury+.05,w:dcols15[2].w-.1,h:gh-.1,fontSize:8.5,color:GR7,valign:"top"});
+      var delX=.35+dcols15[0].w+dcols15[1].w+dcols15[2].w;
+      s15.addShape(pres.shapes.RECTANGLE,{x:delX,y:cury,w:dcols15[3].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s15.addText(deliverableText,{x:delX+.05,y:cury+.05,w:dcols15[3].w-.1,h:gh-.1,fontSize:7.5,color:GR7,valign:"top"});
+      s15.addShape(pres.shapes.LINE,{x:.35,y:cury+gh,w:W-.7,h:0,line:{color:"BBBBBB",pt:.5}});
+      cury+=gh;
+    }
+
+    // SLIDE 16 — Expected Deliverables p2
+    var s16=pres.addSlide(); s16.background={color:WH}; hdr(s16,16);
+    s16.addText("PI 2 Expected Deliverables",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+    dex=.35;
+    for(var dci16=0;dci16<dcols15.length;dci16++){s16.addShape(pres.shapes.RECTANGLE,{x:dex,y:dehY,w:dcols15[dci16].w,h:dehH,fill:{color:PURD},line:{color:PURD}});s16.addText(dcols15[dci16].l,{x:dex,y:dehY,w:dcols15[dci16].w,h:dehH,fontSize:9.5,color:WH,bold:true,align:"center",valign:"middle",margin:0});dex+=dcols15[dci16].w;}
+    var delGroups2=[
+      {ws:"Data\nFoundations",ucs:"F1 Data Model & CMDB\nF2 Event Correlation\nF3 CI Binding\nF4 PSR Maps\nF5 Integration Framework",feats:["F1","F2","F3","F4","F5"],h:2.4},
+      {ws:"Architecture",ucs:"KDD1 Inventory Reconciliation\nKDD2 Metrics & Anomaly\nKDD3 Event Ingestion\nKDD4 Data Transformation\nKDD5 Filtering\nKDD6 SD WAN",feats:["KDD1","KDD2","KDD3","KDD4","KDD5","KDD6"],h:2.8}
+    ];
+    cury=dey;
+    for(var gi2=0;gi2<delGroups2.length;gi2++){
+      var dg2=delGroups2[gi2],gh2=dg2.h;
+      s16.addShape(pres.shapes.RECTANGLE,{x:.35,y:cury,w:dcols15[0].w,h:gh2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s16.addText(dg2.ws,{x:.35,y:cury,w:dcols15[0].w,h:gh2,fontSize:9,color:GR7,align:"center",valign:"middle"});
+      s16.addShape(pres.shapes.RECTANGLE,{x:.35+dcols15[0].w,y:cury,w:dcols15[1].w,h:gh2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s16.addText(dg2.ucs,{x:.35+dcols15[0].w+.05,y:cury+.05,w:dcols15[1].w-.1,h:gh2-.1,fontSize:8.5,color:GR7,valign:"top"});
+      s16.addShape(pres.shapes.RECTANGLE,{x:.35+dcols15[0].w+dcols15[1].w,y:cury,w:dcols15[2].w,h:gh2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s16.addText(dg2.feats.join("\n"),{x:.35+dcols15[0].w+dcols15[1].w+.05,y:cury+.05,w:dcols15[2].w-.1,h:gh2-.1,fontSize:8.5,color:GR7,valign:"top"});
+      var delX2=.35+dcols15[0].w+dcols15[1].w+dcols15[2].w;
+      s16.addShape(pres.shapes.RECTANGLE,{x:delX2,y:cury,w:dcols15[3].w,h:gh2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s16.addText(deliverableText,{x:delX2+.05,y:cury+.05,w:dcols15[3].w-.1,h:gh2-.1,fontSize:7.5,color:GR7,valign:"top"});
+      s16.addShape(pres.shapes.LINE,{x:.35,y:cury+gh2,w:W-.7,h:0,line:{color:"BBBBBB",pt:.5}});
+      cury+=gh2;
+    }
+
+    setProgress(78,"Slide 17: Confidence Voting...");
+
+    // SLIDE 17 — Confidence Voting
+    var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,17);
+    cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+    cv.addText("Agile Team Members \u2013 Devs, QA, Analyst, Architect, PO, PM, RTE",{x:.35,y:.72,w:W-.7,h:.28,fontSize:11,color:GR5});
+    var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
+    var cvcx=.35,cvhy=1.05,cvrh=.92;
+    for(var cv_ci=0;cv_ci<cvcols.length;cv_ci++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:cvcols[cv_ci].w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(cvcols[cv_ci].l,{x:cvcx,y:cvhy,w:cvcols[cv_ci].w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=cvcols[cv_ci].w;}
+    for(var cvi=0;cvi<SQUADS.length;cvi++){
+      var sq_cv=SQUADS[cvi],cvy=cvhy+.48+cvi*cvrh,cvbg=cvi%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
+      for(var cv_ci2=0;cv_ci2<cvcols.length;cv_ci2++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:cvcols[cv_ci2].w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=cvcols[cv_ci2].w;}
+      cv.addText(sq_cv.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:BLK,bold:true,valign:"middle"});
+      cv.addText(sq_cv.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:sq_cv.bg.replace("#",""),bold:true,align:"center"});
+    }
+
+    setProgress(85,"Slides 18-19: ART Summary...");
+
+    // SLIDE 18 — ART Summary p1 (Enhanced Features, Auto1, Auto2)
+    function artSlide(sld,squads,n){
+      sld.background={color:WH}; hdr(sld,n);
+      sld.addText("ART Summary",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:BLK,bold:true});
+      var rowDefs=[{l:"Strong",h:1.35,bg:"404040"},{l:"Medium",h:1.48,bg:"EEEEEE"},{l:"OK",h:1.48,bg:"F5F5F5"},{l:"Risk",h:1.49,bg:"F0F0F0"}];
+      var ry=.82;
+      for(var ri_a=0;ri_a<rowDefs.length;ri_a++){
+        if(ri_a===0){sld.addShape(pres.shapes.RECTANGLE,{x:.18,y:ry,w:1.3,h:rowDefs[ri_a].h,fill:{color:rowDefs[ri_a].bg},line:{color:rowDefs[ri_a].bg}});sld.addText(rowDefs[ri_a].l,{x:.18,y:ry,w:1.3,h:rowDefs[ri_a].h,fontSize:12,color:WH,bold:true,align:"center",valign:"middle"});}
+        else sld.addText(rowDefs[ri_a].l,{x:.18,y:ry,w:1.3,h:rowDefs[ri_a].h,fontSize:11,color:"404040",align:"left",valign:"middle"});
+        ry+=rowDefs[ri_a].h;
+      }
+      var cardW=(W-1.6-.35-.35-squads.length*.08)/squads.length,cardH=5.8,startX=1.6;
+      for(var sci=0;sci<squads.length;sci++){
+        var sq_a=squads[sci],cx_a=startX+sci*(cardW+.08),sqcA=sq_a.bg.replace("#","");
+        sld.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx_a,y:.82,w:cardW,h:cardH,fill:{color:WH},line:{color:sci===squads.length-1?PUR:"BBBBBB",pt:sci===squads.length-1?1.5:.8},rectRadius:.14});
+        sld.addText(sq_a.name.toUpperCase(),{x:cx_a,y:.92,w:cardW,h:.35,fontSize:9.5,color:"999999",align:"center"});
+        var ry_a=.82+.55;
+        var artRows=["Plan baselined for PI2","Use cases scoped and assigned","Designs in progress","Dependencies identified"];
+        for(var ri_a2=0;ri_a2<rowDefs.length;ri_a2++){
+          if(ri_a2>0) sld.addShape(pres.shapes.RECTANGLE,{x:cx_a,y:ry_a,w:cardW,h:rowDefs[ri_a2].h,fill:{color:"F3F4F6"},line:{color:"EEEEEE",pt:.2}});
+          sld.addText(artRows[ri_a2],{x:cx_a+.08,y:ry_a,w:cardW-.16,h:rowDefs[ri_a2].h,fontSize:9,color:ri_a2===0?"888888":"111827",italic:ri_a2===0,valign:"middle",align:"center"});
+          ry_a+=rowDefs[ri_a2].h;
         }
       }
     }
-    setProgress(88,"Confidence vote...");
-    var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
-    cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
-    cv.addText("Agile Team Members - Devs, QA, Analyst, Architect, PO, PM, RTE",{x:.35,y:.72,w:W-.7,h:.28,fontSize:11,color:GR5});
-    var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
-    var cvcx=.35,cvhy=1.05,cvrh=.92;
-    for(var ci3=0;ci3<cvcols.length;ci3++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(cvcols[ci3].l,{x:cvcx,y:cvhy,w:cvcols[ci3].w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=cvcols[ci3].w;}
-    for(var qi2=0;qi2<SQUADS.length;qi2++){
-      var sq2=SQUADS[qi2],cvy=cvhy+.48+qi2*cvrh,cvbg=qi2%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
-      for(var ci4=0;ci4<cvcols.length;ci4++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:cvcols[ci4].w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=cvcols[ci4].w;}
-      cv.addText(sq2.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
-      cv.addText(sq2.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,fontFace:"Calibri",color:sq2.bg.replace("#",""),bold:true,align:"center"});
-    }
-    setProgress(95,"Saving...");
-    var cls=pres.addSlide(); cls.background={color:PURD};
-    cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
-    cls.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
-    cls.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
-    cls.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
+    artSlide(pres.addSlide(),SQUADS.slice(0,3),18);
+
+    // SLIDE 19 — ART Summary p2 (Data Foundations, Architecture)
+    artSlide(pres.addSlide(),SQUADS.slice(3,5),19);
+
+    setProgress(93,"Slide 20: Day 2 Ends...");
+
+    // SLIDE 20 — Day 2 Ends
+    interstitial(pres.addSlide(),"Day 2 Ends \u2013 Thanks",20);
+
+    setProgress(97,"Saving file...");
+
     pres.writeFile({fileName:"PI2_Planning_Workshop_July2026.pptx"}).then(function(){
       setProgress(100,"Done!");
       setTimeout(function(){
         document.getElementById("progressOverlay").classList.remove("show");
         btn.disabled=false; btn.innerHTML="&#8595; Export to PowerPoint";
-        showToast("PowerPoint downloaded successfully!");
+        showToast("PowerPoint downloaded! 20 slides covering both days.");
       },500);
     }).catch(function(err){
       document.getElementById("progressOverlay").classList.remove("show");
@@ -632,6 +885,8 @@ function doExport(btn){
     showToast("Export failed: "+err.message,true);
   }
 }
+
+
 
 render();
 </script>
