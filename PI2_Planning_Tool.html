@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BT AI Ops – PI2 Planning Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js"></script>
+<style>
+  :root {
+    --purple:     #6B00D7;
+    --purple-dark:#4C1D95;
+    --purple-mid: #7C3AED;
+    --purple-soft:#EDE9FE;
+    --gold:       #FCD34D;
+    --white:      #ffffff;
+    --gray-50:    #F9FAFB;
+    --gray-100:   #F3F4F6;
+    --gray-300:   #D1D5DB;
+    --gray-500:   #6B7280;
+    --gray-700:   #374151;
+    --gray-900:   #111827;
+    --radius:     10px;
+    --shadow:     0 2px 12px rgba(0,0,0,.08);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F1EFF8; color: var(--gray-900); min-height: 100vh; }
+
+  /* NAV */
+  nav { background: var(--purple-dark); display: flex; align-items: stretch; justify-content: space-between; flex-wrap: wrap; padding: 0 20px; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+  .nav-bar { width: 6px; height: 28px; background: var(--gold); border-radius: 2px; }
+  .nav-title { color: #fff; font-weight: 800; font-size: 15px; }
+  .nav-sub { color: #DDD6FE; font-size: 10px; }
+  .nav-date { background: #ffffff22; border-radius: 6px; padding: 3px 9px; color: var(--gold); font-size: 11px; font-weight: 700; }
+  .nav-tabs { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+  .nav-tab { background: none; border: none; color: #DDD6FE; padding: 14px 14px; cursor: pointer; font-size: 12px; font-weight: 400; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .nav-tab.active { color: var(--gold); font-weight: 700; border-bottom-color: var(--gold); }
+  .btn-export { background: var(--gold); color: var(--purple-dark); border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 800; font-size: 12px; margin-left: 8px; white-space: nowrap; transition: opacity .15s; }
+  .btn-export:hover { opacity: .85; }
+  .btn-export:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* TOAST */
+  .toast { background: #D1FAE5; border: 1px solid #6EE7B7; padding: 10px 20px; font-size: 12px; color: #065F46; font-weight: 600; display: none; }
+  .toast.error { background: #FEE2E2; border-color: #FCA5A5; color: #991B1B; }
+  .toast.show { display: block; }
+
+  /* LAYOUT */
+  .container { padding: 16px 20px; }
+  .squad-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .pill { border-radius: 20px; padding: 4px 14px; cursor: pointer; font-weight: 700; font-size: 11px; border: 1.5px solid; transition: all .15s; }
+
+  /* SQUAD CARD */
+  .squad-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .squad-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; flex-wrap: wrap; gap: 8px; }
+  .squad-name { color: #fff; font-weight: 800; font-size: 15px; }
+  .squad-meta { color: rgba(255,255,255,.7); font-size: 11px; margin-top: 2px; }
+  .confidence-row { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.15); border-radius: 6px; padding: 4px 10px; }
+  .conf-label { color: rgba(255,255,255,.75); font-size: 10px; }
+  .conf-btn { width: 20px; height: 20px; border-radius: 3px; border: none; cursor: pointer; font-size: 10px; font-weight: 700; transition: all .1s; }
+  .btn-edit { background: rgba(255,255,255,.15); color: #fff; border: none; border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 11px; font-weight: 700; }
+  .btn-edit.active { background: var(--gold); color: var(--purple-dark); }
+
+  /* TABS */
+  .tab-bar { display: flex; border-bottom: 1px solid var(--gray-300); background: var(--gray-50); }
+  .tab-btn { padding: 9px 16px; border: none; background: none; cursor: pointer; font-size: 12px; font-weight: 400; color: var(--gray-500); border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab-btn.active { font-weight: 700; border-bottom-color: currentColor; }
+  .tab-body { padding: 16px; }
+
+  /* PHASE LEGEND */
+  .phase-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .phase-dot { display: flex; align-items: center; gap: 3px; font-size: 10px; color: var(--gray-500); }
+  .phase-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* USE CASE CARD */
+  .uc-card { border-radius: 8px; overflow: hidden; margin-bottom: 8px; border: 1.5px solid; transition: box-shadow .15s; }
+  .uc-header { padding: 9px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid; }
+  .uc-name { font-weight: 700; font-size: 12px; }
+  .uc-preview { font-size: 10px; color: var(--gray-500); margin-top: 2px; }
+  .uc-body { padding: 10px 12px 12px; }
+  .uc-desc { font-size: 11px; color: var(--gray-700); margin-bottom: 10px; line-height: 1.5; }
+  textarea.uc-desc { width: 100%; border: 1px solid var(--gray-300); border-radius: 4px; padding: 6px; font-family: inherit; resize: vertical; min-height: 54px; }
+  .sprint-label { font-size: 10px; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+
+  /* SPRINT GRID */
+  .sprint-header { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 2px; }
+  .sprint-header-cell { border-radius: 3px; padding: 2px 0; font-size: 8px; font-weight: 700; text-align: center; }
+  .sprint-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .sprint-cell { border-radius: 3px; min-height: 26px; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; color: #fff; text-align: center; line-height: 1.1; padding: 2px; }
+  .phase-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .phase-tag { border-radius: 4px; padding: 1px 6px; font-size: 9px; font-weight: 600; border: 1px solid; }
+
+  /* RAID TABLE */
+  .raid-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .raid-table th { padding: 7px 8px; text-align: left; font-weight: 600; color: #fff; white-space: nowrap; }
+  .raid-table td { padding: 6px 8px; vertical-align: top; }
+  .raid-table td:first-child { font-weight: 700; }
+  .rag-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .type-badge { border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+  .raid-empty { padding: 14px; text-align: center; color: var(--gray-300); font-style: italic; font-size: 11px; }
+  input.raid-edit { width: 100%; border: 1px solid var(--gray-300); border-radius: 3px; padding: 2px 4px; font-family: inherit; font-size: 11px; }
+
+  /* TEAM CARDS */
+  .team-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .team-card { border-radius: 8px; padding: 8px 12px; min-width: 100px; border: 1px solid; }
+  .team-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 5px; }
+  .team-name { font-weight: 700; font-size: 11px; color: var(--gray-900); }
+  .team-role { font-size: 10px; }
+
+  /* DEPS */
+  .dep-item { display: flex; align-items: flex-start; gap: 7px; padding: 7px 10px; border-radius: 6px; margin-bottom: 5px; border: 1px solid; }
+  .dep-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .dep-text { font-size: 11px; color: var(--gray-700); }
+  .section-label { font-weight: 700; font-size: 10px; color: var(--gray-500); margin: 8px 0 5px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* PROGRAM BOARD */
+  .board-wrap { background: var(--white); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); overflow-x: auto; }
+  .board-title { font-weight: 800; font-size: 14px; color: var(--purple-dark); margin-bottom: 12px; }
+  .board-table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  .board-table th { padding: 6px 4px; text-align: center; font-size: 9px; min-width: 80px; }
+  .board-table td { padding: 4px; border-bottom: 1px solid var(--gray-100); border-left: 1px solid var(--gray-100); vertical-align: top; }
+  .board-squad-cell { padding: 8px 10px; font-weight: 700; font-size: 9px; color: #fff; min-width: 110px; border-bottom: 2px solid #fff; }
+  .board-sticky { border-radius: 4px; padding: 2px 5px; margin-bottom: 2px; font-size: 8px; font-weight: 600; color: #fff; line-height: 1.3; }
+
+  /* PROGRESS BAR for export */
+  .progress-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; align-items: center; justify-content: center; }
+  .progress-overlay.show { display: flex; }
+  .progress-box { background: #fff; border-radius: 12px; padding: 28px 36px; text-align: center; min-width: 260px; }
+  .progress-title { font-weight: 700; font-size: 15px; color: var(--purple-dark); margin-bottom: 8px; }
+  .progress-sub { font-size: 12px; color: var(--gray-500); margin-bottom: 16px; }
+  .progress-bar-track { background: var(--gray-100); border-radius: 20px; height: 6px; overflow: hidden; }
+  .progress-bar-fill { background: var(--purple-mid); height: 6px; border-radius: 20px; transition: width .3s; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-bar"></div>
+    <div>
+      <div class="nav-sub">BT AI Ops</div>
+      <div class="nav-title">PI2 Planning Tool</div>
+    </div>
+    <div class="nav-date" id="navDate">July 2026</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('squads')">Squad Boards</button>
+    <button class="nav-tab" onclick="switchView('board')">Program Board</button>
+    <button class="nav-tab" onclick="switchView('deps')">Dependencies</button>
+    <button class="btn-export" onclick="exportPPTX()" id="exportBtn">⬇ Export to PowerPoint</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div class="container" id="appRoot"></div>
+
+<!-- PROGRESS OVERLAY -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-box">
+    <div class="progress-title">Generating PowerPoint…</div>
+    <div class="progress-sub" id="progressSub">Building slides</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SQUAD_COLORS = {
+  "Enhanced Features Squad":{ bg:"#7C3AED", light:"#EDE9FE", border:"#DDD6FE" },
+  "Automation Squad 1":     { bg:"#0891B2", light:"#E0F2FE", border:"#BAE6FD" },
+  "Automation Squad 2":     { bg:"#0D9488", light:"#CCFBF1", border:"#99F6E4" },
+  "Data Foundations Squad": { bg:"#D97706", light:"#FEF3C7", border:"#FDE68A" },
+  "Architecture Squad":     { bg:"#BE185D", light:"#FCE7F3", border:"#FBCFE8" },
+};
+const C = n => SQUAD_COLORS[n] || { bg:"#6B46C1", light:"#EDE9FE", border:"#DDD6FE" };
+
+const PHASE_COLORS = { design:"#A78BFA", build:"#7C3AED", test:"#0891B2", uat:"#D97706", live:"#10B981" };
+const RAG_COLORS   = { Red:"#EF4444", Amber:"#F59E0B", Green:"#10B981" };
+const SPRINTS      = ["Sprint 1","Sprint 2","Sprint 3","Sprint 4","Sprint 5","BRP","Sprint 6"];
+
+let state = {
+  date: "July 2026",
+  squads: [
+    {
+      name:"Enhanced Features Squad", confidence:4,
+      useCases:[
+        {name:"UC020 Ticket Summarisation",description:"AI-powered case summaries of incident history to give agents instant context during handovers between service desks, L2 & L3.",phases:[{sprint:"Sprint 1",type:"design",label:"Use Case Defn"},{sprint:"Sprint 2",type:"design",label:"HLD & LLD"},{sprint:"Sprint 3",type:"build",label:"Solution Build"},{sprint:"Sprint 4",type:"test",label:"UAT"},{sprint:"Sprint 5",type:"live",label:"Go-live"}]},
+        {name:"UC021 Resolver Auto-Task Creation",description:"Automate task creation for resolver group where L2/3 handover is required. Assignment group auto-populated from CMDB.",phases:[{sprint:"Sprint 1",type:"design",label:"Use Case Defn"},{sprint:"Sprint 2",type:"design",label:"HLD & LLD"},{sprint:"Sprint 3",type:"build",label:"Solution Build"},{sprint:"Sprint 4",type:"test",label:"Testing"},{sprint:"Sprint 5",type:"live",label:"Go-live 6 Aug"}]},
+        {name:"UC024 Intelligent Auto-closure",description:"Auto-draft resolution notes, closure codes and categorisations for faster ticket closure.",phases:[{sprint:"Sprint 1",type:"design",label:"Use Case Defn"},{sprint:"Sprint 3",type:"build",label:"Solution Build"},{sprint:"Sprint 4",type:"test",label:"Testing"},{sprint:"Sprint 5",type:"live",label:"Go-live 6 Aug"}]},
+        {name:"UC026 Email Mgmt w/ Now Assist",description:"Email management to ServiceNow as single source. Templating and Now Assist capability.",phases:[{sprint:"Sprint 2",type:"design",label:"Requirements"},{sprint:"Sprint 3",type:"build",label:"Solution Build"},{sprint:"Sprint 4",type:"test",label:"Testing"},{sprint:"Sprint 5",type:"live",label:"Go-live 3 Sep"}]},
+        {name:"UC018 Troubleshoot on KX Base",description:"Surfaces relevant knowledge article suggestions for agent based on current incident type.",phases:[{sprint:"Sprint 2",type:"design",label:"Process Align"},{sprint:"Sprint 3",type:"build",label:"Build"},{sprint:"Sprint 5",type:"live",label:"Go-live 17 Sep"}]},
+      ],
+      teamMembers:[{name:"Lea Xu",role:"Owner"},{name:"Jeenet",role:"Tech Lead"},{name:"Aastha",role:"Dev"},{name:"Hrishita",role:"Dev"},{name:"Tester TBC",role:"QA"}],
+      raid:[
+        {id:"01",type:"D",description:"Recursive summarisation tool availability",owner:"Lea / Jeenet",rag:"Amber",mitigation:"Capability not at risk if unavailable"},
+        {id:"02",type:"D",description:"Access to BT Confluence/Jira and ServiceNow environments",owner:"Jeenet",rag:"Green",mitigation:"Access granted before EoD 29 May"},
+        {id:"03",type:"R",description:"KX Article Creation timeline — stakeholder alignment risk",owner:"Lea",rag:"Amber",mitigation:"Partially approved; depends on UAT results"},
+        {id:"04",type:"R",description:"Pan-BT table approval required (Ticket Summarisation, Article Creation)",owner:"Jeenet / Lea",rag:"Amber",mitigation:"CoE decision required"},
+      ],
+      dependencies:["Pan-BT approval for Incident/Task tables","Recursive summarisation tool (ServiceNow)","CoE sign-off before UAT","Change & Adoption for training packs"],
+    },
+    {
+      name:"Automation Squad 1", confidence:3,
+      useCases:[
+        {name:"UC016 Auto-Test Diagnostics",description:"Combine predictive intelligence with decision tables to trigger diagnostics automatically for known patterns. Minimise human triage effort.",phases:[{sprint:"Sprint 1",type:"design",label:"Collate As-Is"},{sprint:"Sprint 2",type:"design",label:"Arch & Value"},{sprint:"Sprint 3",type:"build",label:"Batch 1 Discovery"},{sprint:"Sprint 4",type:"build",label:"Batch 1 Design"},{sprint:"Sprint 5",type:"test",label:"Batch 2 Discovery"},{sprint:"Sprint 6",type:"build",label:"Batch 2 Design"}]},
+        {name:"UC030 Repeatable Automations",description:"Trigger workflows/scripts for self-healing (restart, cache refresh). NFF quick wins prioritised.",phases:[{sprint:"Sprint 3",type:"design",label:"Discovery"},{sprint:"Sprint 4",type:"build",label:"Design"},{sprint:"Sprint 5",type:"build",label:"Batch 2 Discovery"}]},
+      ],
+      teamMembers:[{name:"Upamanyu Ghosh",role:"Owner"},{name:"Vijay",role:"Tech Lead"},{name:"Han",role:"Dev"},{name:"Hari",role:"Dev"},{name:"Kasper Ovesen",role:"SME"}],
+      raid:[
+        {id:"01",type:"D",description:"HLD on hold — tool selection for API Build / Modification pending",owner:"Vijay / Han",rag:"Amber",mitigation:"Solution design ongoing; unblocks Sprint 3"},
+        {id:"02",type:"R",description:"L2 resolver group workshops needed for Batch 2 features",owner:"Upamanyu",rag:"Green",mitigation:"Workshops set from Sprint 3"},
+      ],
+      dependencies:["API Build/Modification tool selection","L2 Resolver Group workshops","ServiceNow diagnostic results POC","Rule-Based NBA Layer requirements from Ops"],
+    },
+    {
+      name:"Automation Squad 2", confidence:3,
+      useCases:[
+        {name:"UC021 Resolver Task Creation",description:"Phase 1: CMDB data to route incident task assignment group. Phase 2: combine with Auto Diagnostics + Predictive Intelligence.",phases:[{sprint:"Sprint 1",type:"design",label:"Requirements"},{sprint:"Sprint 2",type:"design",label:"HLD & LLD"},{sprint:"Sprint 3",type:"build",label:"Build"},{sprint:"Sprint 4",type:"test",label:"Testing"},{sprint:"Sprint 5",type:"live",label:"Go-live"}]},
+        {name:"UC024 Intelligent Auto-closure",description:"Incidents auto-resolved using Predictive Intelligence and Now Assist after meeting required criteria.",phases:[{sprint:"Sprint 1",type:"design",label:"Requirements"},{sprint:"Sprint 2",type:"design",label:"HLD & LLD"},{sprint:"Sprint 3",type:"build",label:"Build"}]},
+        {name:"UC029 PWR Automation",description:"Phase 1: Proactive Case with 5 agreed power issue types. Phase 2 discovery in PI2.",phases:[{sprint:"Sprint 2",type:"design",label:"Requirements"},{sprint:"Sprint 3",type:"build",label:"HLD & LLD"},{sprint:"Sprint 4",type:"build",label:"Build"}]},
+        {name:"UC026 Email Mgmt w/ Now Assist",description:"Email management to ServiceNow. Requirement gathering ongoing.",phases:[{sprint:"Sprint 2",type:"design",label:"Requirements"},{sprint:"Sprint 3",type:"build",label:"Design"}]},
+      ],
+      teamMembers:[{name:"Bamani Devi Gobalan",role:"Owner"},{name:"Paul B",role:"BA"},{name:"Developer TBC",role:"Dev"}],
+      raid:[
+        {id:"01",type:"D",description:"Resolver task creation — 2-phase approach agreed",owner:"Bamani",rag:"Green",mitigation:"Phased delivery confirmed"},
+        {id:"02",type:"R",description:"UC024 Intelligent Auto-closure — functional approval pending",owner:"Bamani / Paul B",rag:"Amber",mitigation:"Follow-up with BT squad lead"},
+        {id:"03",type:"I",description:"Resolver group auto-assignment challenged by Ops team",owner:"Bamani",rag:"Amber",mitigation:"One-product-at-a-time roll-out plan discussed"},
+      ],
+      dependencies:["Resolver group assignment — Ops agreement needed","UC024 functional approval","PWR scope confirmation from Ops","CMDB data quality for Phase 1"],
+    },
+    {
+      name:"Data Foundations Squad", confidence:3,
+      useCases:[
+        {name:"F1 Data Model & CMDB",description:"Baseline data architecture, CMDB as-is review, initial inventory design for IP Connect.",phases:[{sprint:"Sprint 1",type:"design",label:"Define Data Input"},{sprint:"Sprint 2",type:"design",label:"Identify Elements"},{sprint:"Sprint 3",type:"build",label:"Map to Sources"},{sprint:"Sprint 4",type:"build",label:"Validate Telco"},{sprint:"Sprint 5",type:"test",label:"DQ Gap Analysis"}]},
+        {name:"F2 Event Correlation",description:"List all BT Business event sources, payloads & attributes, normalisation approach. Foundation for UC012.",phases:[{sprint:"Sprint 2",type:"design",label:"Event Sources"},{sprint:"Sprint 3",type:"build",label:"Payloads Published"},{sprint:"Sprint 5",type:"test",label:"Normalisation"}]},
+        {name:"F3 CI Binding",description:"Document how each event source currently binds to CIs. Foundation for target state.",phases:[{sprint:"Sprint 4",type:"build",label:"CI Binding Approach"}]},
+        {name:"F4 PSR Maps",description:"Complete PSR map for IP Connect — pathfinder product, reusable template for all future products.",phases:[{sprint:"Sprint 5",type:"build",label:"IP Connect PSR Map"}]},
+        {name:"F5 Integration Framework",description:"Ingestion logic for all sources. BFG and Entuity integration design. HLD design starts Sprint 5.",phases:[{sprint:"Sprint 2",type:"design",label:"Ingestion Logic"},{sprint:"Sprint 5",type:"build",label:"Integration HLD"}]},
+      ],
+      teamMembers:[{name:"Jayme Huskinson",role:"Owner"},{name:"Sonali",role:"Data Arch"},{name:"Chetan",role:"Data Eng"},{name:"Narendra",role:"Event Corr"},{name:"Simran",role:"Integration"},{name:"Fateh",role:"Topology"},{name:"Prakash",role:"BFG/GCP"}],
+      raid:[
+        {id:"01",type:"D",description:"BFG GCP instance access not in place — blocks F1 and F5 data architecture review",owner:"Prakash Upadhyay",rag:"Red",mitigation:"Expedite GCP access — on critical path for F1 and F5"},
+        {id:"02",type:"R",description:"CMDB data quality may be worse than expected — compresses S5 design time",owner:"Jayme Huskinson",rag:"Amber",mitigation:"CMDB workshop S4 to surface issues early. Parallel supplementary source investigation."},
+      ],
+      dependencies:["GCP access for BFG (critical path)","CMDB workshop confirmation from BT CMDB team","S5 investigation outputs completing on time","Entuity topology rework completion"],
+    },
+    {
+      name:"Architecture Squad", confidence:3,
+      useCases:[
+        {name:"KDD1 Inventory Reconciliation",description:"Baseline architecture steer: IRE rules with ServiceNow, Entuity as discovery source. BFG data validation pending.",phases:[{sprint:"Sprint 1",type:"design",label:"Workshop started"},{sprint:"Sprint 5",type:"live",label:"KDD Finalised"}]},
+        {name:"KDD2 Metrics & Anomaly Detection",description:"Infrastructure requirements for ingestion of metrics and EA steer for anomaly detection. Awaiting ServiceNow response.",phases:[{sprint:"Sprint 2",type:"design",label:"OSS Apps Rationalisation"},{sprint:"Sprint 5",type:"live",label:"KDD Finalised"}]},
+        {name:"KDD3 Event Ingestion Approach",description:"Kafka via REST API or Kafka Stream Connect. Confirm raw vs pre-processed events.",phases:[{sprint:"Sprint 3",type:"build",label:"SD WAN Telemetry"},{sprint:"Sprint 5",type:"live",label:"KDD Finalised"}]},
+        {name:"KDD4 Data Transformation Layer",description:"TSOM vs TSOM+GenWizard due diligence complete. Approved by Mujahid.",phases:[{sprint:"Sprint 4",type:"build",label:"Validate TSOM"},{sprint:"Sprint 5",type:"live",label:"KDD Finalised"}]},
+        {name:"KDD5 Filtering & Performance",description:"Filtering and enrichment requirements for metrics. Dependent on KDD2 outcome.",phases:[{sprint:"Sprint 5",type:"design",label:"Target State Arch"}]},
+        {name:"KDD6 SD WAN Telemetry",description:"Baseline ingestion approach from SD WAN platform. Due diligence starting.",phases:[{sprint:"Sprint 5",type:"design",label:"Target State Arch"}]},
+      ],
+      teamMembers:[{name:"Hari M",role:"EA Lead / Owner"},{name:"Jasdeep S",role:"Owner / EA"},{name:"Han N G",role:"SNOW Architect"},{name:"TSOM Architect",role:"TBC"}],
+      raid:[
+        {id:"BSDVSAL-15437",type:"R",description:"Anomaly detection use cases not yet defined by BT Ops team",owner:"Accenture Team",rag:"Amber",mitigation:"Steer from Abhinav — use Accenture experience with similar clients"},
+        {id:"BSDVSAL-15438",type:"D",description:"Inventory reconciliation — BFG data validation pending",owner:"Arpan",rag:"Red",mitigation:"Internal BT decision on BFG as source needed"},
+        {id:"BSDVSAL-15355",type:"D",description:"ServiceNow infrastructure recommendation for 20M metrics pending",owner:"Han N G",rag:"Amber",mitigation:"Need response from ServiceNow (Roy Silon)"},
+      ],
+      dependencies:["KDD1: Alex Bell sign-off on BFG as source","KDD2: ServiceNow SME response (Roy Silon)","KDD3: ServiceNow event ingestion clarification","Ops team use cases for anomaly detection"],
+    },
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentView    = "squads";
+let activeSquad    = null;
+let openUCCards    = {};   // squadIdx-ucIdx -> bool
+let editingSquads  = {};   // squadIdx -> bool
+let activeTab      = {};   // squadIdx -> tabName
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  const root = document.getElementById("appRoot");
+  if (currentView === "squads") root.innerHTML = renderSquadsView();
+  else if (currentView === "board") root.innerHTML = renderBoardView();
+  else root.innerHTML = renderDepsView();
+  attachHandlers();
+}
+
+function renderSquadsView() {
+  const pills = `<div class="squad-pills">
+    <button class="pill" style="background:${activeSquad===null?'#4C1D95':'#fff'};color:${activeSquad===null?'#fff':'#6B46C1'};border-color:#7C3AED" onclick="setSquad(null)">All Squads</button>
+    ${state.squads.map((s,i)=>{
+      const c=C(s.name);
+      return `<button class="pill" style="background:${activeSquad===i?c.bg:c.light};color:${activeSquad===i?'#fff':c.bg};border-color:${c.bg}" onclick="setSquad(${i})">${s.name}</button>`;
+    }).join("")}
+  </div>`;
+  const squads = activeSquad !== null ? [[activeSquad, state.squads[activeSquad]]] : state.squads.map((s,i)=>[i,s]);
+  return pills + squads.map(([i,s]) => renderSquadCard(i,s)).join("");
+}
+
+function renderSquadCard(idx, squad) {
+  const c   = C(squad.name);
+  const tab = activeTab[idx] || "sprints";
+  const editing = !!editingSquads[idx];
+  const tabs = [["sprints","Sprint Plan"],["raid","RAID Log"],["team","Team"],["deps","Dependencies"]];
+
+  const confBtns = [1,2,3,4,5].map(v =>
+    `<button class="conf-btn" onclick="setConf(${idx},${v})" style="background:${(squad.confidence||0)>=v?'#FCD34D':'rgba(255,255,255,.25)};color:${(squad.confidence||0)>=v?'#92400E':'rgba(255,255,255,.6)'}">${v}</button>`
+  ).join("");
+
+  const header = `
+    <div class="squad-header" style="background:${c.bg}">
+      <div>
+        <div class="squad-name">${squad.name}</div>
+        <div class="squad-meta">${squad.useCases.length} use cases · ${squad.teamMembers.length} members</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="confidence-row">
+          <span class="conf-label">Confidence</span>
+          ${confBtns}
+        </div>
+        <button class="btn-edit ${editing?'active':''}" onclick="toggleEdit(${idx})">${editing?'✓ Done':'✏ Edit'}</button>
+      </div>
+    </div>`;
+
+  const tabBar = `<div class="tab-bar">
+    ${tabs.map(([id,label])=>`<button class="tab-btn ${tab===id?'active':''}" style="${tab===id?`color:${c.bg}`:''}" onclick="setTab(${idx},'${id}')">${label}</button>`).join("")}
+  </div>`;
+
+  let body = "";
+  if (tab === "sprints") body = renderSprintsTab(idx, squad, c, editing);
+  else if (tab === "raid") body = renderRaidTab(idx, squad, c, editing);
+  else if (tab === "team") body = renderTeamTab(squad, c);
+  else body = renderDepsTab(squad, c);
+
+  return `<div class="squad-card" style="border:1px solid ${c.border}">${header}${tabBar}<div class="tab-body">${body}</div></div>`;
+}
+
+function renderSprintsTab(sqIdx, squad, c, editing) {
+  const legend = Object.entries(PHASE_COLORS).map(([k,v])=>
+    `<span class="phase-dot"><span class="phase-swatch" style="background:${v}"></span>${k}</span>`
+  ).join("");
+
+  const headerCells = SPRINTS.map(sp =>
+    `<div class="sprint-header-cell" style="background:${sp==='BRP'?'#FCD34D':'#4C1D95'};color:${sp==='BRP'?'#1F2937':'#fff'}">${sp}</div>`
+  ).join("");
+
+  const cards = squad.useCases.map((uc,ucIdx) => {
+    const key = `${sqIdx}-${ucIdx}`;
+    const open = !!openUCCards[key];
+    const gridCells = SPRINTS.map(sp => {
+      const ph = (uc.phases||[]).find(p=>p.sprint===sp);
+      const bg = ph ? (PHASE_COLORS[ph.type]||c.bg) : sp==='BRP' ? '#FCD34D22' : '#F3F4F6';
+      const border = sp==='BRP' ? '1px dashed #FCD34D' : 'none';
+      return `<div class="sprint-cell" style="background:${bg};border:${border};color:${ph?'#fff':'transparent'}">${ph?ph.label:''}</div>`;
+    }).join("");
+
+    const phaseTags = (uc.phases||[]).map(p=>
+      `<span class="phase-tag" style="background:${PHASE_COLORS[p.type]||c.bg}22;color:${PHASE_COLORS[p.type]||c.bg};border-color:${PHASE_COLORS[p.type]||c.bg}44">${p.sprint}: ${p.label}</span>`
+    ).join("");
+
+    const descField = editing
+      ? `<textarea class="uc-desc" onchange="updateUCDesc(${sqIdx},${ucIdx},this.value)">${uc.description}</textarea>`
+      : `<div class="uc-desc">${uc.description}</div>`;
+
+    return `
+      <div class="uc-card" style="border-color:${c.border}">
+        <div class="uc-header" style="border-bottom-color:${c.bg};background:#fff" onclick="toggleUC('${key}')">
+          <div>
+            <div class="uc-name" style="color:${c.bg}">${uc.name}</div>
+            ${!open?`<div class="uc-preview">${(uc.description||'').slice(0,70)}${(uc.description||'').length>70?'…':''}</div>`:''}
+          </div>
+          <span style="color:${c.bg};font-size:11px;margin-left:8px;flex-shrink:0">${open?'▲':'▼'}</span>
+        </div>
+        ${open?`<div class="uc-body">
+          ${descField}
+          <div class="sprint-label">SPRINT PLAN</div>
+          <div class="sprint-header">${headerCells}</div>
+          <div class="sprint-grid">${gridCells}</div>
+          <div class="phase-tags">${phaseTags}</div>
+        </div>`:''}
+      </div>`;
+  }).join("");
+
+  const addBtn = editing
+    ? `<button onclick="addUC(${sqIdx})" style="width:100%;padding:8px;background:${c.light};color:${c.bg};border:1px dashed ${c.bg};border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;margin-top:8px">+ Add Use Case</button>`
+    : "";
+
+  return `<div class="phase-legend">${legend}</div>${cards}${addBtn}`;
+}
+
+function renderRaidTab(sqIdx, squad, c, editing) {
+  const headerStyle = `style="background:${c.bg}"`;
+  if (squad.raid.length === 0) return `<table class="raid-table"><thead><tr ${headerStyle}><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>RAG</th><th>Mitigation</th></tr></thead><tbody><tr><td colspan="6" class="raid-empty">No RAID items yet — add during workshop</td></tr></tbody></table>`;
+
+  const rows = squad.raid.map((r,ri) => {
+    const rag = RAG_COLORS[r.rag]||"#9CA3AF";
+    const typeBg = r.type==="R"?"#FEE2E2":r.type==="I"?"#FEF3C7":r.type==="A"?"#D1FAE5":"#E0F2FE";
+    const typeCol = r.type==="R"?"#B91C1C":r.type==="I"?"#92400E":r.type==="A"?"#065F46":"#0369A1";
+    const desc = editing
+      ? `<input class="raid-edit" value="${r.description.replace(/"/g,'&quot;')}" onchange="updateRAID(${sqIdx},${ri},'description',this.value)">`
+      : r.description;
+    return `<tr style="background:${ri%2===0?'#fff':c.light}">
+      <td style="color:${c.bg}">${r.id}</td>
+      <td><span class="type-badge" style="background:${typeBg};color:${typeCol}">${r.type}</span></td>
+      <td>${desc}</td>
+      <td style="white-space:nowrap">${r.owner}</td>
+      <td style="text-align:center"><span class="rag-dot" style="background:${rag}" title="${r.rag}"></span></td>
+      <td style="color:#6B7280">${r.mitigation}</td>
+    </tr>`;
+  }).join("");
+
+  return `<div style="overflow-x:auto"><table class="raid-table"><thead><tr ${headerStyle}><th>ID</th><th>Type</th><th>Description</th><th>Owner</th><th>RAG</th><th>Mitigation</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderTeamTab(squad, c) {
+  return `<div class="team-grid">${squad.teamMembers.map(m => {
+    const initials = m.name.split(" ").map(w=>w[0]).slice(0,2).join("");
+    return `<div class="team-card" style="background:${c.light};border-color:${c.border}">
+      <div class="team-avatar" style="background:${c.bg}">${initials}</div>
+      <div class="team-name">${m.name}</div>
+      <div class="team-role" style="color:${c.bg}">${m.role}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function renderDepsTab(squad, c) {
+  const deps = (squad.dependencies||[]).map(d =>
+    `<div class="dep-item" style="background:${c.light};border-color:${c.border}">
+      <span class="dep-dot" style="background:${c.bg}"></span>
+      <span class="dep-text">${d}</span>
+    </div>`
+  ).join("") || `<p style="color:#9CA3AF;font-size:11px;font-style:italic">No dependencies recorded yet.</p>`;
+
+  return `<div class="section-label">Dependencies</div>${deps}`;
+}
+
+function renderBoardView() {
+  const headerCells = SPRINTS.map(sp =>
+    `<th style="background:${sp==='BRP'?'#FCD34D':'#4C1D95'};color:${sp==='BRP'?'#1F2937':'#fff'}">${sp}</th>`
+  ).join("");
+
+  const rows = state.squads.map((squad,qi) => {
+    const c = C(squad.name);
+    const cells = SPRINTS.map(sp => {
+      const feats = squad.useCases.flatMap(uc =>
+        (uc.phases||[]).filter(p=>p.sprint===sp).map(p=>({label:p.label||uc.name.split(" ").slice(0,2).join(" "), type:p.type}))
+      );
+      const stickies = feats.map(f =>
+        `<div class="board-sticky" style="background:${PHASE_COLORS[f.type]||c.bg}">${f.label}</div>`
+      ).join("");
+      return `<td style="background:${qi%2===0?'#FAFAFA':'#fff'}">${stickies}</td>`;
+    }).join("");
+    return `<tr><td class="board-squad-cell" style="background:${c.bg}">${squad.name}</td>${cells}</tr>`;
+  }).join("");
+
+  return `<div class="board-wrap">
+    <div class="board-title">Program Board — PI2 Plan on a Page</div>
+    <div style="overflow-x:auto">
+      <table class="board-table">
+        <thead><tr><th style="background:#4C1D95;color:#fff;text-align:left;padding:6px 10px;min-width:110px">Squad</th>${headerCells}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderDepsView() {
+  const cards = state.squads.map(squad => {
+    const c = C(squad.name);
+    const deps = (squad.dependencies||[]).map(d =>
+      `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">
+        <span style="width:5px;height:5px;border-radius:50%;background:${c.bg};margin-top:4px;flex-shrink:0"></span>
+        <span style="font-size:10px;color:#374151">${d}</span>
+      </div>`
+    ).join("");
+    const risks = squad.raid.filter(r=>r.rag==="Red"||r.rag==="Amber").slice(0,3).map(r =>
+      `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:5px">
+        <span class="rag-dot" style="background:${RAG_COLORS[r.rag]||'#9CA3AF'};margin-top:2px;flex-shrink:0"></span>
+        <span style="font-size:10px;color:#374151">${r.description}</span>
+      </div>`
+    ).join("");
+    return `<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid ${c.border}">
+      <div style="background:${c.bg};padding:10px 14px">
+        <div style="color:#fff;font-weight:700;font-size:12px">${squad.name}</div>
+        <div style="color:${c.border}cc;font-size:10px">Dependencies & Risks</div>
+      </div>
+      <div style="padding:12px">
+        <div class="section-label">Dependencies</div>${deps}
+        <div class="section-label" style="margin-top:10px">Top Risks</div>${risks||'<p style="color:#9CA3AF;font-size:10px;font-style:italic">No red/amber risks</p>'}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">${cards}</div>`;
+}
+
+// ─── HANDLERS ─────────────────────────────────────────────────────────────────
+function attachHandlers() {} // events are inline onclick
+
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  event.target.classList.add("active");
+  render();
+}
+
+function setSquad(i) { activeSquad = i; render(); }
+function setTab(idx, tab) { activeTab[idx] = tab; render(); }
+function toggleUC(key) { openUCCards[key] = !openUCCards[key]; render(); }
+function toggleEdit(idx) { editingSquads[idx] = !editingSquads[idx]; render(); }
+
+function setConf(idx, v) {
+  state.squads[idx].confidence = v;
+  render();
+}
+
+function updateUCDesc(sqIdx, ucIdx, val) {
+  state.squads[sqIdx].useCases[ucIdx].description = val;
+}
+
+function updateRAID(sqIdx, ri, field, val) {
+  state.squads[sqIdx].raid[ri][field] = val;
+}
+
+function addUC(sqIdx) {
+  state.squads[sqIdx].useCases.push({ name:"New Use Case", description:"", phases:[] });
+  render();
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isError?" error":"");
+  setTimeout(() => t.classList.remove("show"), 6000);
+}
+
+function setProgress(pct, msg) {
+  document.getElementById("progressBar").style.width = pct + "%";
+  if (msg) document.getElementById("progressSub").textContent = msg;
+}
+
+// ─── PPTX EXPORT ──────────────────────────────────────────────────────────────
+async function exportPPTX() {
+  if (typeof PptxGenJS === "undefined") {
+    showToast("⚠ PptxGenJS library not loaded — check your internet connection and refresh.", true);
+    return;
+  }
+
+  const btn = document.getElementById("exportBtn");
+  btn.disabled = true;
+  btn.textContent = "Generating…";
+  document.getElementById("progressOverlay").classList.add("show");
+  setProgress(5, "Setting up…");
+
+  // Small delay so browser can paint the overlay
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    const pres = new PptxGenJS();
+    pres.layout  = "LAYOUT_WIDE";
+    pres.author  = "BT AI Ops";
+    pres.title   = "PI2 Planning Workshop";
+
+    const W = 13.3, H = 7.5;
+    const PUR  = "6B00D7", PURD = "4C1D95", PURL = "EDE9FE";
+    const PURM = "7C3AED", GOLD = "FCD34D";
+    const WH   = "FFFFFF", GR1  = "F3F4F6", GR5  = "6B7280", GR7  = "374151";
+
+    function hdr(s, n) {
+      s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:`  ${n}`,options:{color:GR5,fontSize:9,bold:true}}], {x:W-2.8,y:0.1,w:2.7,h:0.25,align:"right"});
+    }
+    function phaseCol(t) { return {design:"A78BFA",build:PURM,test:"0891B2",uat:"D97706",live:"10B981"}[t]||PURM; }
+    function ragCol(r) { return {Red:"EF4444",Amber:"F59E0B",Green:"10B981"}[r]||"9CA3AF"; }
+    function sqCol(n) {
+      const m={
+        "Enhanced Features Squad":"7C3AED","Automation Squad 1":"0891B2",
+        "Automation Squad 2":"0D9488","Data Foundations Squad":"D97706","Architecture Squad":"BE185D"
+      };
+      return m[n]||PURM;
+    }
+
+    // ── SLIDE 1: Cover ──
+    setProgress(10, "Cover slide…");
+    await new Promise(r=>setTimeout(r,30));
+    {
+      const s = pres.addSlide();
+      s.background = { color:"0A0A1A" };
+      s.addText("BT Business AI Ops.", {x:.5,y:.6,w:4.5,h:.5,fontSize:20,fontFace:"Calibri Light",color:WH});
+      s.addText("PI2 Planning\nWorkshop", {x:.5,y:1.15,w:4.5,h:1.8,fontSize:40,fontFace:"Calibri Light",color:WH});
+      s.addText(state.date||"July 2026", {x:.5,y:3.0,w:4,h:.45,fontSize:18,fontFace:"Calibri Light",color:WH});
+      const cx=9.5, cy=3.8;
+      [[2.2,.8,"1E90D0"],[1.6,.7,"1B5EA0"],[1.0,.5,"132F6A"]].forEach(([r,pt,col])=>{
+        s.addShape(pres.shapes.OVAL,{x:cx-r,y:cy-r*.6,w:r*2,h:r*1.2,fill:{color:"0D1B3E"},line:{color:col,pt}});
+      });
+      s.addShape(pres.shapes.LINE,{x:7.2,y:1.5,w:4,h:3.5,line:{color:"E07820",pt:2}});
+      s.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
+      s.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
+      s.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
+    }
+
+    // ── SLIDE 2: Day 1 Agenda ──
+    setProgress(18, "Day 1 agenda…");
+    await new Promise(r=>setTimeout(r,30));
+    {
+      const s = pres.addSlide(); s.background={color:WH}; hdr(s,2);
+      s.addText("PI Planning Agenda ( Day 1 )", {x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:"000000"});
+      s.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
+      const items=[
+        {n:"01",type:"INTRO",   dur:"60 min",title:"Pre-Planning",                    desc:"PI1 outcomes, Programme backlog, capacity per squad, architecture runway & enablers",       time:"09:00–10:00",aud:"Team Leads, Scrum Master"},
+        {n:"02",type:"OBJECTIVE",dur:"30 min",title:"Business Context & Vision",       desc:"Business priorities, Key outcomes for PI2, Top Features and Acceptance criteria explained",  time:"10:00–10:30",aud:"TBD"},
+        {n:"03",type:"BREAK",   dur:"10 min",title:"Break",                            desc:"10 min comfort break",                                                                       time:"10:30–10:40",aud:"Everyone"},
+        {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan – Jul–Sep",time:"10:40–12:45",aud:"Everyone"},
+        {n:"05",type:"BREAK",   dur:"30 min",title:"Lunch Break",                      desc:"30 min lunchbreak",                                                                          time:"12:45–13:15",aud:"Everyone"},
+        {n:"06",type:"PLENARY", dur:"60 min",title:"Squads Confirm: Plan of work for PI2 commitment",desc:"8–10 mins per team · Plans · showcase PI2 distributed over sprints",           time:"13:15–14:00",aud:"Each team lead presents"},
+        {n:"07",type:"PLENARY", dur:"30 min",title:"PI Planning Acceptance Criteria",  desc:"Captured at Jira level",                                                                     time:"14:00–14:30",aud:"Team leads"},
+      ];
+      const rowH=.72, sy=.96;
+      items.forEach((it,i)=>{
+        const y=sy+i*(rowH+.08);
+        s.addText(it.n,{x:.35,y,w:.65,h:rowH,fontSize:28,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
+        const pc=it.type==="BREAK"?"9B9B9B":it.type==="BREAKOUT"?"00A550":it.type==="OBJECTIVE"?"0070C0":PURM;
+        s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
+        s.addText(it.type,{x:1.04,y:y+.06,w:.82,h:.22,fontSize:7,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+        s.addText(it.dur,{x:1.04,y:y+.31,w:.82,h:.2,fontSize:9,color:GR5,align:"center"});
+        s.addText(it.title,{x:1.92,y,w:7.0,h:.32,fontSize:14,fontFace:"Calibri",color:"000000",bold:true,valign:"bottom"});
+        s.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
+        s.addText(it.time,{x:W-2.2,y,w:2.1,h:.3,fontSize:11,fontFace:"Calibri",color:"000000",align:"right",valign:"bottom"});
+        s.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,fontFace:"Calibri",color:GR5,italic:true,align:"right"});
+        if(i<items.length-1) s.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+      });
+    }
+
+    // ── SLIDE 3: Day 2 Agenda ──
+    setProgress(25, "Day 2 agenda…");
+    await new Promise(r=>setTimeout(r,30));
+    {
+      const s = pres.addSlide(); s.background={color:WH}; hdr(s,3);
+      s.addText("PI Planning Agenda ( Day 2 )", {x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:"000000"});
+      s.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
+      const items=[
+        {n:"08",type:"INTRO",   dur:"60 min",title:"Risk, Dependencies, Issues to be mapped",desc:"Team to mark and highlight possible risk, issues, wait items",                          time:"09:00–10:00",aud:"TBD"},
+        {n:"09",type:"INTRO",   dur:"2 hrs",  title:"RAID to be discussed",                  desc:"Discuss on Risk, ownership, Accepted, Mitigated",                                       time:"10:00–10:30",aud:"TBD"},
+        {n:"10",type:"BREAK",   dur:"10 min", title:"Break",                                 desc:"10 min comfort break",                                                                  time:"10:30–10:40",aud:"Everyone"},
+        {n:"11",type:"BACKDROP",dur:"30 min", title:"Clean the Program Board",               desc:"Non-relevant information to be cleaned up",                                             time:"10:40–12:45",aud:"Everyone"},
+        {n:"12",type:"BREAK",   dur:"30 min", title:"Lunch Break",                           desc:"30 min lunch break",                                                                    time:"12:45–13:15",aud:"Everyone"},
+        {n:"13",type:"PLENARY", dur:"45 min", title:"Final Plan review + Confidence Vote",   desc:"Discuss on Risk, ownership, Accepted, Mitigated",                                       time:"13:15–14:00",aud:"Each team lead presents"},
+        {n:"14",type:"PLENARY", dur:"30 min", title:"Left free for any fallouts",            desc:"Anything overstretched can be compensated",                                             time:"14:00–14:30",aud:"Team leads"},
+      ];
+      const rowH=.72, sy=.96;
+      items.forEach((it,i)=>{
+        const y=sy+i*(rowH+.08);
+        s.addText(it.n,{x:.35,y,w:.65,h:rowH,fontSize:28,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
+        const pc=it.type==="BREAK"?"9B9B9B":it.type==="BACKDROP"?GOLD:PURM;
+        s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
+        s.addText(it.type,{x:1.04,y:y+.06,w:.82,h:.22,fontSize:7,color:it.type==="BACKDROP"?"000000":WH,bold:true,align:"center",valign:"middle",margin:0});
+        s.addText(it.dur,{x:1.04,y:y+.31,w:.82,h:.2,fontSize:9,color:GR5,align:"center"});
+        s.addText(it.title,{x:1.92,y,w:7.0,h:.32,fontSize:14,fontFace:"Calibri",color:"000000",bold:true,valign:"bottom"});
+        s.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
+        s.addText(it.time,{x:W-2.2,y,w:2.1,h:.3,fontSize:11,fontFace:"Calibri",color:"000000",align:"right",valign:"bottom"});
+        s.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,fontFace:"Calibri",color:GR5,italic:true,align:"right"});
+        if(i<items.length-1) s.addShape(pres.shapes.LINE,{x:.35,y:y+rowH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+      });
+    }
+
+    // ── SLIDES 4–N: Per-squad slides ──
+    let slideNum = 4;
+    const total = state.squads.length;
+
+    for (let qi = 0; qi < state.squads.length; qi++) {
+      const squad = state.squads[qi];
+      const bg = sqCol(squad.name);
+      const pct = 30 + Math.round((qi / total) * 55);
+      setProgress(pct, `${squad.name}…`);
+      await new Promise(r=>setTimeout(r,40));
+
+      // Squad overview slide
+      {
+        const s = pres.addSlide(); s.background={color:WH}; hdr(s, slideNum++);
+        s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:1.1,fill:{color:bg},line:{color:bg}});
+        s.addText(squad.name,{x:.35,y:0,w:10,h:1.1,fontSize:26,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
+        s.addText(`Confidence: ${squad.confidence||'–'}/5  ·  ${squad.useCases.length} use cases  ·  ${squad.teamMembers.length} members`,{x:.35,y:.75,w:10,h:.3,fontSize:11,color:"DDD6FE"});
+
+        const colW=2.85, colH=1.55, cols=4;
+        squad.useCases.slice(0,8).forEach((uc,i)=>{
+          const col=i%cols, row=Math.floor(i/cols);
+          const x=.35+col*(colW+.12), y=1.25+row*(colH+.12);
+          s.addShape(pres.shapes.RECTANGLE,{x,y,w:colW,h:colH,fill:{color:WH},line:{color:bg+"44",pt:1.2}});
+          s.addShape(pres.shapes.RECTANGLE,{x,y,w:colW,h:.06,fill:{color:bg},line:{color:bg}});
+          s.addText(uc.name,{x:x+.08,y:y+.1,w:colW-.16,h:.35,fontSize:9.5,fontFace:"Calibri",color:bg,bold:true});
+          s.addText(uc.description||"",{x:x+.08,y:y+.46,w:colW-.16,h:.98,fontSize:7.5,fontFace:"Calibri",color:GR7,valign:"top"});
+        });
+      }
+
+      // Sprint plan slide
+      {
+        const s = pres.addSlide(); s.background={color:WH}; hdr(s, slideNum++);
+        s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.7,fill:{color:bg},line:{color:bg}});
+        s.addText(`${squad.name} — Sprint Plan`,{x:.35,y:0,w:12,h:.7,fontSize:18,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
+
+        const labelW=1.7, spW=(W-labelW-.7)/SPRINTS.length, sy=.82, hdrH=.38, wkH=.2;
+        SPRINTS.forEach((sp,i)=>{
+          const x=labelW+.35+i*spW;
+          const isBRP=sp==="BRP";
+          s.addShape(pres.shapes.RECTANGLE,{x,y:sy,w:spW-.04,h:hdrH,fill:{color:isBRP?GOLD:PURD},line:{color:isBRP?GOLD:PURD}});
+          s.addText(sp,{x,y:sy,w:spW-.04,h:hdrH,fontSize:8,color:isBRP?"000000":WH,bold:true,align:"center",valign:"middle",margin:0});
+          ["wk"+(i*2+1),"wk"+(i*2+2)].forEach((wk,wi)=>{
+            const wx=x+wi*(spW/2);
+            s.addShape(pres.shapes.RECTANGLE,{x:wx,y:sy+hdrH,w:spW/2-.02,h:wkH,fill:{color:GR1},line:{color:"DDDDDD",pt:.2}});
+            s.addText(wk,{x:wx,y:sy+hdrH,w:spW/2-.02,h:wkH,fontSize:6.5,color:GR5,align:"center",valign:"middle",margin:0});
+          });
+        });
+        const maxUC=Math.min(squad.useCases.length,6);
+        const rowH=(H-sy-hdrH-wkH-.35)/maxUC;
+        squad.useCases.slice(0,maxUC).forEach((uc,ri)=>{
+          const ry=sy+hdrH+wkH+ri*(rowH+.04);
+          s.addShape(pres.shapes.RECTANGLE,{x:.35,y:ry,w:labelW-.08,h:rowH,fill:{color:bg+"22"},line:{color:bg+"44",pt:.5}});
+          s.addText(uc.name,{x:.4,y:ry+.02,w:labelW-.2,h:rowH-.04,fontSize:7.5,fontFace:"Calibri",color:bg,bold:true,valign:"top"});
+          SPRINTS.forEach((sp,si)=>{
+            const cx=labelW+.35+si*spW;
+            const ph=(uc.phases||[]).find(p=>p.sprint===sp);
+            s.addShape(pres.shapes.RECTANGLE,{x:cx,y:ry,w:spW-.04,h:rowH,fill:{color:ph?ph.type==="live"?"D1FAE5":ph.type==="test"?"DBEAFE":ph.type==="build"?"EDE9FE":"F3E8FF":"F9FAFB"},line:{color:"E5E7EB",pt:.2}});
+            if(ph){
+              s.addShape(pres.shapes.RECTANGLE,{x:cx+.03,y:ry+.05,w:spW-.1,h:rowH-.1,fill:{color:phaseCol(ph.type)},line:{color:phaseCol(ph.type)}});
+              s.addText(ph.label||"",{x:cx+.03,y:ry+.05,w:spW-.1,h:rowH-.1,fontSize:6.5,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+            }
+          });
+        });
+      }
+
+      // RAID slide
+      {
+        const s = pres.addSlide(); s.background={color:WH}; hdr(s, slideNum++);
+        s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.7,fill:{color:bg},line:{color:bg}});
+        s.addText(`${squad.name} — Risks, Assumptions, Issues & Dependencies`,{x:.35,y:0,w:12.5,h:.7,fontSize:15,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
+        const cols=[{l:"ID",w:.5},{l:"Type",w:.6},{l:"Description",w:4.6},{l:"Owner",w:1.4},{l:"RAG",w:.6},{l:"Mitigation",w:5.0}];
+        let cx=.35, hy=.82, rh=.62;
+        cols.forEach(col=>{
+          s.addShape(pres.shapes.RECTANGLE,{x:cx,y:hy,w:col.w,h:.3,fill:{color:PURD},line:{color:PURD}});
+          s.addText(col.l,{x:cx,y:hy,w:col.w,h:.3,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+          cx+=col.w;
+        });
+        squad.raid.slice(0,9).forEach((r,ri)=>{
+          const ry=hy+.3+ri*rh; if(ry+rh>H-.1) return;
+          const rbg=ri%2===0?WH:PURL;
+          cx=.35;
+          [r.id,r.type,r.description,r.owner,"●",r.mitigation].forEach((v,ci)=>{
+            const cw=cols[ci].w;
+            s.addShape(pres.shapes.RECTANGLE,{x:cx,y:ry,w:cw,h:rh,fill:{color:rbg},line:{color:"DDDDDD",pt:.3}});
+            if(ci===4){
+              s.addShape(pres.shapes.OVAL,{x:cx+cw/2-.1,y:ry+rh/2-.1,w:.2,h:.2,fill:{color:ragCol(r.rag)},line:{color:ragCol(r.rag)}});
+            } else {
+              s.addText(v,{x:cx+.04,y:ry+.04,w:cw-.08,h:rh-.08,fontSize:ci===2?7.5:8.5,fontFace:"Calibri",color:"374151",valign:"top"});
+            }
+            cx+=cw;
+          });
+        });
+        if(squad.raid.length===0) s.addText("No RAID items recorded — add during workshop",{x:.35,y:2,w:12,h:1,fontSize:14,color:"CCCCCC",align:"center"});
+      }
+    }
+
+    // ── CONFIDENCE VOTE slide ──
+    setProgress(88, "Confidence vote…");
+    await new Promise(r=>setTimeout(r,30));
+    {
+      const s = pres.addSlide(); s.background={color:WH}; hdr(s, slideNum++);
+      s.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+      s.addText("Agile Team Members – Devs, QA, Analyst, Architect, PO, PM, RTE",{x:.35,y:.72,w:W-.7,h:.28,fontSize:11,fontFace:"Calibri",color:GR5});
+      const cols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
+      let cx=.35, hy=1.05, rh=.92;
+      cols.forEach(col=>{
+        s.addShape(pres.shapes.RECTANGLE,{x:cx,y:hy,w:col.w,h:.48,fill:{color:PUR},line:{color:PUR}});
+        s.addText(col.l,{x:cx,y:hy,w:col.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+        cx+=col.w;
+      });
+      state.squads.forEach((sq,i)=>{
+        const ry=hy+.48+i*rh, rowbg=i%2===0?PURL:GR1;
+        cx=.35;
+        cols.forEach(col=>{
+          s.addShape(pres.shapes.RECTANGLE,{x:cx,y:ry,w:col.w,h:rh,fill:{color:rowbg},line:{color:"DDDDDD",pt:.3}});
+          cx+=col.w;
+        });
+        s.addText(sq.name.toUpperCase(),{x:.43,y:ry,w:cols[0].w-.16,h:rh,fontSize:11,fontFace:"Calibri",color:"000000",bold:true,valign:"middle"});
+        // Confidence bar
+        const barX=.35+cols[0].w+cols[1].w+.2, barW=cols[2].w-.4;
+        s.addText(`${sq.confidence||'–'}/5`,{x:barX,y:ry+rh/2-.2,w:barW,h:.4,fontSize:18,fontFace:"Calibri",color:sqCol(sq.name),bold:true,align:"center"});
+      });
+    }
+
+    // ── CLOSING SLIDE ──
+    setProgress(94, "Closing slide…");
+    await new Promise(r=>setTimeout(r,30));
+    {
+      const s = pres.addSlide();
+      s.background={color:PURD};
+      s.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
+      s.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
+      s.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
+      s.addText("Day 2 Ends – Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
+    }
+
+    setProgress(98, "Saving file…");
+    await new Promise(r=>setTimeout(r,30));
+
+    const month = (state.date||"July_2026").replace(/\s+/g,"_");
+    await pres.writeFile({ fileName:`PI2_Planning_Workshop_${month}.pptx` });
+
+    setProgress(100, "Done!");
+    await new Promise(r=>setTimeout(r,300));
+
+    showToast("✓ PowerPoint downloaded successfully!");
+
+  } catch(err) {
+    console.error(err);
+    showToast("⚠ Export failed: " + err.message, true);
+  } finally {
+    document.getElementById("progressOverlay").classList.remove("show");
+    btn.disabled = false;
+    btn.textContent = "⬇ Export to PowerPoint";
+  }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
