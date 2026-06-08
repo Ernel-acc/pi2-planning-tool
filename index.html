@@ -135,7 +135,7 @@ function dbDelete(table,col,val){
   return fetch(SUPA_URL+"/rest/v1/"+table+"?"+col+"=eq."+val,{method:"DELETE",headers:HDRS});
 }
 
-var DB={squads:[],useCases:[],phases:[],stickies:[],floatingDeps:[],depGroups:[],depItems:[],teamMembers:[]};
+var DB={squads:[],useCases:[],phases:[],stickies:[],floatingDeps:[],depGroups:[],depItems:[],teamMembers:[],userStories:[]};
 var currentSquad=0,currentView="board",editMode=false;
 var SPRINTS=[{name:"Sprint 1",weeks:["wk1","wk2"]},{name:"Sprint 2",weeks:["wk3","wk4"]},{name:"Sprint 3",weeks:["wk5","wk6"]},{name:"Sprint 4",weeks:["wk7","wk8"]},{name:"Sprint 5",weeks:["wk9","wk10"]},{name:"BRP",weeks:["wk11"]},{name:"Sprint 6",weeks:["wk12"]}];
 var ALL_WEEKS=["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
@@ -156,7 +156,7 @@ async function loadAll(){
     var r=await Promise.all([
       dbGet("squads","name"),dbGet("use_cases","sort_order"),dbGet("phases","sort_order"),
       dbGet("stickies","sort_order"),dbGet("floating_deps","sort_order"),dbGet("dep_groups","sort_order"),
-      dbGet("dep_items","sort_order"),dbGet("team_members","sort_order")
+      dbGet("dep_items","sort_order"),dbGet("team_members","sort_order"),dbGet("user_stories","sort_order")
     ]);
     DB.squads=Array.isArray(r[0])?r[0]:[];
     DB.useCases=Array.isArray(r[1])?r[1]:[];
@@ -166,6 +166,7 @@ async function loadAll(){
     DB.depGroups=Array.isArray(r[5])?r[5]:[];
     DB.depItems=Array.isArray(r[6])?r[6]:[];
     DB.teamMembers=Array.isArray(r[7])?r[7]:[];
+    DB.userStories=Array.isArray(r[8])?r[8]:[];
     if(!DB.squads.length){
       showErr("No data found. Check the SQL ran correctly in Supabase.");return;
     }
@@ -221,7 +222,7 @@ function renderBoard(){
   h+='</div></div>';
 
   h+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Notes</div>';
-  h+='<div class="panel-body" style="font-size:9.5px;color:#374151" '+(editMode?'contenteditable="true" onblur="saveSq(\'notes\',this.innerText)"':'')+'>'+( s.notes||'<em style="color:#9CA3AF">Notes...</em>')+'</div></div>';
+  h += '<div class="panel-body" style="font-size:9.5px;color:#374151;min-height:80px" contenteditable="true" onblur="saveSq(\'notes\',this.innerText)">' + (s.notes || '') + '</div></div>';
   h+='</div>';
 
   // Sprint grid
@@ -298,25 +299,54 @@ function renderBoard(){
   if(editMode) h+='<div style="padding:10px;background:#F8F6FF;border-top:1px dashed #DDD6FE"><button class="btn-add" onclick="addUC(\''+s.id+'\')">+ Add Use Case</button></div>';
   h+='</div>';
 
-  // Side panels
-  h+='<div class="side-panels">';
-  h+='<div class="deps-panel"><div class="deps-panel-title">Dependencies &amp; Risks</div><div class="deps-panel-body">';
-  grFor(s.id).forEach(function(g){
-    h+='<div class="deps-group"><div class="deps-group-label" '+(editMode?'contenteditable="true" onblur="saveGr('+g.id+',this.innerText)"':'')+'>'+g.label+'</div><div class="deps-sticky-row">';
-    itFor(g.id).forEach(function(it){
-      h+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:130px" '+(editMode?'contenteditable="true" onblur="saveIt('+it.id+',this.innerText)"':'')+'>'+it.text;
-      if(editMode) h+='<button class="btn-del" onclick="delIt('+it.id+')">&#10005;</button>';
-      h+='</div>';
+  // Side panels - fully editable
+  h += '<div class="side-panels">';
+
+  // Dependencies & Risks - always editable, no edit mode toggle needed
+  h += '<div class="deps-panel">';
+  h += '<div class="deps-panel-title">Dependencies &amp; Risks ';
+  h += '<button onclick="addGr(\'' + s.id + '\')" style="background:rgba(255,255,255,.25);border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:10px;font-weight:700;margin-left:6px">+ Group</button>';
+  h += '</div>';
+  h += '<div class="deps-panel-body">';
+  grFor(s.id).forEach(function(g) {
+    h += '<div class="deps-group">';
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">';
+    h += '<div class="deps-group-label" contenteditable="true" onblur="saveGr(' + g.id + ',this.innerText)" style="flex:1;outline:none;padding:2px 4px;border-radius:3px;border-bottom:1px dashed #C4B5FD">' + g.label + '</div>';
+    h += '<button onclick="delGr(' + g.id + ')" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:3px;padding:1px 5px;cursor:pointer;font-size:9px">&#10005;</button>';
+    h += '</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">';
+    itFor(g.id).forEach(function(it) {
+      h += '<div style="position:relative;display:inline-block">';
+      h += '<div class="sticky ' + it.color + '" contenteditable="true" onblur="saveIt(' + it.id + ',this.innerText)" style="font-size:9px;max-width:140px;min-width:60px;min-height:28px;outline:none;cursor:text">' + it.text + '</div>';
+      h += '<div style="position:absolute;top:-7px;right:-7px;display:flex;gap:1px">';
+      h += '<button onclick="cycleColor(' + it.id + ')" title="Change colour" style="width:13px;height:13px;background:#6B2FBE;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:7px;line-height:1;display:flex;align-items:center;justify-content:center">&#9679;</button>';
+      h += '<button onclick="delIt(' + it.id + ')" style="width:13px;height:13px;background:#EF4444;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:8px;line-height:1;display:flex;align-items:center;justify-content:center">&#10005;</button>';
+      h += '</div></div>';
     });
-    if(editMode) h+='<button class="btn-add" onclick="addIt('+g.id+')">+ item</button>';
-    h+='</div></div>';
+    h += '<button class="btn-add" onclick="addIt(' + g.id + ')">+ item</button>';
+    h += '</div></div>';
   });
-  if(editMode) h+='<button class="btn-add" onclick="addGr(\''+s.id+'\')">+ group</button>';
-  h+='</div></div>';
-  h+='<div class="stories-panel"><div class="stories-panel-title">User Stories</div><div class="stories-panel-body">';
-  for(var i=0;i<12;i++) h+='<div class="story-empty"></div>';
-  h+='</div></div>';
-  h+='</div>';
+  h += '</div></div>';
+
+  // User Stories - editable stickies
+  h += '<div class="stories-panel">';
+  h += '<div class="stories-panel-title">User Stories ';
+  h += '<button onclick="addStory(\'' + s.id + '\')" style="background:rgba(255,255,255,.25);border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:10px;font-weight:700;margin-left:6px">+ Story</button>';
+  h += '</div>';
+  h += '<div style="padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;min-height:120px;background:#F8F6FF">';
+  var usArr = DB.userStories ? DB.userStories.filter(function(us) { return us.squad_id === s.id; }) : [];
+  if (usArr.length === 0) {
+    h += '<div style="color:#9CA3AF;font-size:11px;font-style:italic;padding:8px">Click &ldquo;+ Story&rdquo; to add user stories</div>';
+  }
+  usArr.forEach(function(us) {
+    h += '<div style="position:relative;display:inline-block">';
+    h += '<div class="sticky yellow" contenteditable="true" onblur="saveStory(' + us.id + ',this.innerText)" style="font-size:9px;min-width:80px;max-width:130px;min-height:50px;outline:none;cursor:text;display:block">' + us.text + '</div>';
+    h += '<button onclick="delStory(' + us.id + ')" style="position:absolute;top:-7px;right:-7px;width:13px;height:13px;background:#EF4444;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:8px;display:flex;align-items:center;justify-content:center">&#10005;</button>';
+    h += '</div>';
+  });
+  h += '</div></div>';
+
+  h += '</div>';
 
   document.getElementById("mainBoard").innerHTML=h;
   if(editMode) initDrag();
@@ -591,6 +621,38 @@ async function delTm(id){
   renderBoard();
 }
 
+async function cycleColor(id){
+  var colors=["yellow","pink","purple","green"];
+  var it=DB.depItems.find(function(x){return x.id===id});
+  if(!it) return;
+  var next=colors[(colors.indexOf(it.color)+1)%colors.length];
+  it.color=next;
+  await dbPatch("dep_items","id",id,{color:next});
+  renderBoard();
+}
+async function delGr(id){
+  if(!confirm("Delete this group and all its items?")) return;
+  await dbDelete("dep_items","group_id",id);
+  await dbDelete("dep_groups","id",id);
+  DB.depItems=DB.depItems.filter(function(x){return x.group_id!==id});
+  DB.depGroups=DB.depGroups.filter(function(x){return x.id!==id});
+  renderBoard();
+}
+async function addStory(sqId){
+  var t=prompt("User story (e.g. As a user, I want to...):"); if(!t) return;
+  var d=await dbPost("user_stories",{squad_id:sqId,text:t,sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.userStories.push(d[0]);
+  renderBoard(); showToast("Story added!");
+}
+async function saveStory(id,val){
+  var us=DB.userStories.find(function(x){return x.id===id}); if(us) us.text=val.trim();
+  await dbPatch("user_stories","id",id,{text:val.trim()});
+}
+async function delStory(id){
+  await dbDelete("user_stories","id",id);
+  DB.userStories=DB.userStories.filter(function(x){return x.id!==id});
+  renderBoard();
+}
 function showToast(msg,e){
   var t=document.getElementById("toast"); t.textContent=msg;
   t.className="toast show"+(e?" error":"");
