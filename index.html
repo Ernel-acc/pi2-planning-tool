@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BT AI Ops – PI Planning Tool</title>
-
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -20,42 +19,48 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 .nav-tab.active{color:#FCD34D;font-weight:700;border-bottom-color:#FCD34D}
 .btn-export{background:#FCD34D;color:#4C1D95;border:none;border-radius:7px;padding:7px 13px;cursor:pointer;font-weight:800;font-size:11px}
 .squad-selector{display:flex;gap:6px;padding:12px 20px;flex-wrap:wrap;background:#E9E5F8;border-bottom:1px solid #D4D0EE;align-items:center}
-.squad-btn{border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;border:1.5px solid transparent}
+.squad-btn{border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s}
 .board-container{padding:16px 20px;overflow-x:auto}
 .board{min-width:1400px}
 .squad-header-bar{border-radius:8px 8px 0 0;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.squad-header-bar h2{color:#fff;font-size:18px;font-weight:800}
 .board-top{display:grid;grid-template-columns:200px 1fr 280px 180px;gap:12px;padding:12px;background:#fff;border:1px solid #E5E0F8}
 .panel-box{border-radius:8px;overflow:hidden}
 .panel-title{padding:7px 10px;font-size:11px;font-weight:700;color:#fff;text-align:center}
 .panel-body{padding:8px;background:#F8F6FF;min-height:80px}
-.sticky{border-radius:4px;padding:5px 7px;font-size:9.5px;line-height:1.3;font-weight:500;cursor:pointer;transition:transform .1s,box-shadow .1s;word-break:break-word;box-shadow:1px 2px 4px rgba(0,0,0,.12);display:inline-block}
-.sticky:hover{transform:scale(1.03);box-shadow:2px 4px 8px rgba(0,0,0,.18)}
+/* Sticky notes */
+.sticky{border-radius:4px;padding:5px 7px;font-size:9.5px;line-height:1.3;font-weight:500;word-break:break-word;box-shadow:1px 2px 4px rgba(0,0,0,.12);display:inline-block;position:relative}
 .sticky.yellow{background:#FFE566;color:#1F1F1F}
 .sticky.pink{background:#FF8FAB;color:#1F1F1F}
 .sticky.purple{background:#C084FC;color:#1F1F1F}
 .sticky.green{background:#86EFAC;color:#1F1F1F}
-.sticky.white{background:#fff;color:#374151;border:1px solid #E5E7EB}
 .sticky-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+/* Sprint grid */
 .sprint-grid-wrap{background:#fff;border:1px solid #E5E0F8;border-top:none}
-.sprint-headers{display:grid;border-bottom:1px solid #E5E0F8}
 .sprint-header-cell{background:#6B2FBE;color:#fff;text-align:center;padding:7px 4px;font-size:11px;font-weight:700;border-right:1px solid #8B4FDE}
 .sprint-header-cell.brp{background:#FCD34D;color:#1F2937}
-.week-headers{display:grid;background:#F3F0FF;border-bottom:2px solid #E5E0F8}
 .week-cell{padding:4px 2px;font-size:9px;color:#6B7280;text-align:center;border-right:1px solid #E5E0F8;font-weight:500}
-.uc-row{display:grid;border-bottom:1px solid #EEE;min-height:160px}
-.uc-label{padding:10px;border-right:1px solid #E5E0F8;display:flex;flex-direction:column;gap:4px;background:#FAFAFA}
-.uc-label-badge{border-radius:5px;padding:5px 8px;font-size:10px;font-weight:700;color:#fff;text-align:center;line-height:1.3}
-.uc-label-desc{font-size:9.5px;color:#6B7280;line-height:1.4;margin-top:4px}
-.phase-box{border:1.5px solid #374151;background:#fff;border-radius:4px;padding:5px 8px;position:absolute}
-.phase-box-header{font-size:9px;font-weight:700;color:#1F2937;margin-bottom:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+/* Phase boxes - draggable */
+.phase-box{border:1.5px solid #374151;background:#fff;border-radius:4px;padding:6px 8px;position:absolute;cursor:grab;user-select:none;min-height:80px;box-shadow:1px 2px 6px rgba(0,0,0,.1);transition:box-shadow .1s}
+.phase-box:active{cursor:grabbing;box-shadow:3px 6px 16px rgba(0,0,0,.2)}
+.phase-box.dragging{opacity:.85;z-index:100;box-shadow:4px 8px 20px rgba(0,0,0,.25)}
+.phase-box-header{font-size:9px;font-weight:700;color:#1F2937;margin-bottom:5px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .phase-owner{font-size:8.5px;color:#6B7280;font-weight:400}
 .phase-stickies{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.phase-label-big{border-radius:5px;padding:8px 12px;font-size:11px;font-weight:800;color:#fff;text-align:center;white-space:nowrap}
+.phase-label-big{border-radius:5px;padding:7px 10px;font-size:11px;font-weight:800;color:#fff;text-align:center;white-space:nowrap;margin-bottom:4px;display:inline-block}
 .phase-label-big.yellow{background:#F59E0B;color:#1F2937}
 .phase-label-big.purple{background:#7C3AED}
 .phase-label-big.green{background:#10B981}
 .phase-label-big.teal{background:#0891B2}
+/* Editable content */
+[contenteditable]{outline:none;cursor:text}
+[contenteditable]:focus{background:rgba(255,255,0,.25);border-radius:2px;outline:2px solid #7C3AED}
+.edit-banner{background:#FEF3C7;border:1px solid #FCD34D;padding:6px 12px;font-size:11px;color:#92400E;font-weight:600;text-align:center;display:none}
+.edit-banner.show{display:block}
+/* Add buttons */
+.btn-add{background:rgba(109,47,190,.08);border:1.5px dashed #6B2FBE;border-radius:4px;padding:3px 8px;font-size:9px;color:#4C1D95;cursor:pointer;font-weight:700;margin-top:4px}
+.btn-add:hover{background:rgba(109,47,190,.15)}
+.btn-del{background:#FEE2E2;color:#B91C1C;border:none;border-radius:3px;padding:1px 5px;cursor:pointer;font-size:8px;font-weight:700;margin-left:4px}
+/* Side panels */
 .side-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:#fff;border:1px solid #E5E0F8;border-top:none}
 .deps-panel{background:#F8F6FF;border-radius:8px;overflow:hidden}
 .deps-panel-title{background:#6B2FBE;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;text-align:center}
@@ -66,18 +71,8 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 .stories-panel{background:#F8F6FF;border-radius:8px;overflow:hidden}
 .stories-panel-title{background:#6B2FBE;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;text-align:center}
 .stories-panel-body{padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
-.story-empty{background:#FFE566;border-radius:4px;height:50px;opacity:.5}
-
-/* Edit mode */
-.edit-banner{background:#FEF3C7;border:1px solid #FCD34D;padding:6px 12px;font-size:11px;color:#92400E;font-weight:600;text-align:center;display:none}
-.edit-banner.show{display:block}
-.editable-sticky{cursor:text;border:2px dashed #7C3AED !important;min-width:80px;min-height:30px}
-.add-sticky-btn{background:#FFF9C4;border:1.5px dashed #F59E0B;border-radius:4px;padding:4px 8px;font-size:9px;color:#92400E;cursor:pointer;font-weight:600}
-.add-sticky-btn:hover{background:#FEF3C7}
-.btn-del-sticky{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#EF4444;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700;z-index:10}
-.sticky-wrap{position:relative;display:inline-block}
-.sticky-wrap:hover .btn-del-sticky{display:flex}
-
+.story-empty{background:#FFE566;border-radius:4px;height:50px;opacity:.4}
+/* Toast */
 .toast{background:#D1FAE5;border:1px solid #6EE7B7;padding:8px 16px;font-size:11px;color:#065F46;font-weight:600;display:none;position:fixed;top:60px;right:20px;z-index:300;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
 .toast.show{display:block}
 .toast.error{background:#FEE2E2;border-color:#FCA5A5;color:#991B1B}
@@ -93,19 +88,13 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 .progress-fill{background:#7C3AED;height:6px;border-radius:20px;transition:width .3s}
 .view{display:none}
 .view.active{display:block}
-
-/* Inline edit input */
-.inline-edit{background:rgba(255,255,0,.3);border:none;border-bottom:1px solid #7C3AED;font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;width:100%;outline:none;padding:1px 2px}
 </style>
 </head>
 <body>
 <nav>
   <div class="nav-brand">
     <div class="nav-bar"></div>
-    <div>
-      <div class="nav-sub">BT AI Ops</div>
-      <div class="nav-title">PI Planning Tool</div>
-    </div>
+    <div><div class="nav-sub">BT AI Ops</div><div class="nav-title">PI Planning Tool</div></div>
     <div class="nav-date">PI2 &mdash; July 2026</div>
   </div>
   <div class="nav-right">
@@ -115,10 +104,10 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
     <button class="btn-export" onclick="exportPPTX()">&#8595; Export to PowerPoint</button>
   </div>
 </nav>
-<div class="squad-selector" id="squadSelector"><div class="spinner"></div> Loading squads...</div>
-<div class="edit-banner" id="editBanner">&#9998; Edit mode ON — click any sticky to edit, use + to add new ones, hover to delete</div>
+<div class="squad-selector" id="squadSelector"><div class="spinner"></div> Loading...</div>
+<div class="edit-banner" id="editBanner">&#9998; Edit mode — click any text to edit it directly, drag phase boxes to move them, use + buttons to add items</div>
 <div class="toast" id="toast"></div>
-<div class="view active" id="view-board"><div class="board-container"><div class="board" id="mainBoard"><div class="loading"><div class="spinner"></div> Loading planning data from database...</div></div></div></div>
+<div class="view active" id="view-board"><div class="board-container"><div class="board" id="mainBoard"><div class="loading"><div class="spinner"></div> Loading from database...</div></div></div></div>
 <div class="view" id="view-program"><div class="board-container"><div id="programBoard"></div></div></div>
 <div class="view" id="view-deps"><div class="board-container"><div id="depsView"></div></div></div>
 <div class="progress-overlay" id="progressOverlay">
@@ -129,371 +118,326 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
   </div>
 </div>
 <script>
-// ── Supabase ──────────────────────────────────────────────────────────────────
 var SUPA_URL = "https://jzufzorkfharnfvrjewk.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dWZ6b3JrZmhhcm5mdnJqZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mjk3MTEsImV4cCI6MjA5NjUwNTcxMX0.mGq4Ii_2xA-Le54vMMIKGtvT55Dqo7-5WjpxnsATgeM";
+var HDRS = {"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"};
 
-// Direct fetch wrapper - no library needed
-var sb = {
-  from: function(table) {
-    var base = SUPA_URL + "/rest/v1/" + table;
-    var headers = {
-      "apikey": SUPA_KEY,
-      "Authorization": "Bearer " + SUPA_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    };
-    return {
-      select: function(cols, opts) {
-        var url = base + "?select=" + (cols||"*");
-        if(opts && opts.count) url += "&" + opts.count + "=exact";
-        return {
-          order: function(col) {
-            url += "&order=" + col;
-            return fetch(url, {headers: headers})
-              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[], error: d.message?{message:d.message}:null}; }); })
-              .catch(function(e){ return {data:[], error:{message:e.message}}; });
-          },
-          eq: function(col, val) {
-            url += "&" + col + "=eq." + val;
-            return fetch(url, {headers: headers})
-              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[], error:null}; }); });
-          },
-          then: function(cb) {
-            return fetch(url, {headers: headers})
-              .then(function(r){ return r.json(); })
-              .then(function(d){ return cb({data:Array.isArray(d)?d:[], error:null}); });
-          }
-        };
-      },
-      insert: function(data) {
-        return {
-          select: function() {
-            return fetch(base, {method:"POST", headers:headers, body:JSON.stringify(data)})
-              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[d], error:null}; }); })
-              .catch(function(e){ return {data:[], error:{message:e.message}}; });
-          }
-        };
-      },
-      update: function(data) {
-        return {
-          eq: function(col, val) {
-            return fetch(base+"?"+col+"=eq."+val, {method:"PATCH", headers:headers, body:JSON.stringify(data)})
-              .then(function(r){ return {data:null, error:null}; })
-              .catch(function(e){ return {error:{message:e.message}}; });
-          }
-        };
-      },
-      delete: function() {
-        return {
-          eq: function(col, val) {
-            return fetch(base+"?"+col+"=eq."+val, {method:"DELETE", headers:headers})
-              .then(function(){ return {data:null, error:null}; });
-          }
-        };
-      }
-    };
-  }
-};
+function dbGet(table,order){
+  return fetch(SUPA_URL+"/rest/v1/"+table+"?select=*&order="+(order||"id"),{headers:HDRS}).then(function(r){return r.json()});
+}
+function dbPost(table,data){
+  return fetch(SUPA_URL+"/rest/v1/"+table,{method:"POST",headers:HDRS,body:JSON.stringify(data)}).then(function(r){return r.json()});
+}
+function dbPatch(table,col,val,data){
+  return fetch(SUPA_URL+"/rest/v1/"+table+"?"+col+"=eq."+val,{method:"PATCH",headers:HDRS,body:JSON.stringify(data)});
+}
+function dbDelete(table,col,val){
+  return fetch(SUPA_URL+"/rest/v1/"+table+"?"+col+"=eq."+val,{method:"DELETE",headers:HDRS});
+}
 
-// ── State ─────────────────────────────────────────────────────────────────────
-var DB = { squads:[], useCases:[], phases:[], stickies:[], floatingDeps:[], depGroups:[], depItems:[], teamMembers:[] };
-var currentSquad = 0;
-var currentView = "board";
-var editMode = false;
-var SPRINTS = [{name:"Sprint 1",weeks:["wk1","wk2"]},{name:"Sprint 2",weeks:["wk3","wk4"]},{name:"Sprint 3",weeks:["wk5","wk6"]},{name:"Sprint 4",weeks:["wk7","wk8"]},{name:"Sprint 5",weeks:["wk9","wk10"]},{name:"BRP",weeks:["wk11"]},{name:"Sprint 6",weeks:["wk12"]}];
-var ALL_WEEKS = ["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
-var WEEK_W = 88, LABEL_W = 170;
+var DB={squads:[],useCases:[],phases:[],stickies:[],floatingDeps:[],depGroups:[],depItems:[],teamMembers:[]};
+var currentSquad=0,currentView="board",editMode=false;
+var SPRINTS=[{name:"Sprint 1",weeks:["wk1","wk2"]},{name:"Sprint 2",weeks:["wk3","wk4"]},{name:"Sprint 3",weeks:["wk5","wk6"]},{name:"Sprint 4",weeks:["wk7","wk8"]},{name:"Sprint 5",weeks:["wk9","wk10"]},{name:"BRP",weeks:["wk11"]},{name:"Sprint 6",weeks:["wk12"]}];
+var ALL_WEEKS=["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
+var WK=88,LBL=170;
 
-// ── Load all data ─────────────────────────────────────────────────────────────
-async function loadAll() {
-  try {
-    var results = await Promise.all([
-      fetch(SUPA_URL+"/rest/v1/squads?select=*&order=name", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/use_cases?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/phases?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/stickies?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/floating_deps?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/dep_groups?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/dep_items?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
-      fetch(SUPA_URL+"/rest/v1/team_members?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+function sq(){return DB.squads[currentSquad]||{}}
+function ucsFor(id){return DB.useCases.filter(function(u){return u.squad_id===id})}
+function phFor(id){return DB.phases.filter(function(p){return p.use_case_id===id})}
+function stFor(id){return DB.stickies.filter(function(s){return s.phase_id===id})}
+function fdFor(id){return DB.floatingDeps.filter(function(f){return f.use_case_id===id})}
+function grFor(id){return DB.depGroups.filter(function(g){return g.squad_id===id})}
+function itFor(id){return DB.depItems.filter(function(i){return i.group_id===id})}
+function tmFor(id){return DB.teamMembers.filter(function(t){return t.squad_id===id})}
+function wkI(wk){return ALL_WEEKS.indexOf(wk)}
+
+async function loadAll(){
+  try{
+    var r=await Promise.all([
+      dbGet("squads","name"),dbGet("use_cases","sort_order"),dbGet("phases","sort_order"),
+      dbGet("stickies","sort_order"),dbGet("floating_deps","sort_order"),dbGet("dep_groups","sort_order"),
+      dbGet("dep_items","sort_order"),dbGet("team_members","sort_order")
     ]);
-
-    DB.squads      = Array.isArray(results[0]) ? results[0] : [];
-    DB.useCases    = Array.isArray(results[1]) ? results[1] : [];
-    DB.phases      = Array.isArray(results[2]) ? results[2] : [];
-    DB.stickies    = Array.isArray(results[3]) ? results[3] : [];
-    DB.floatingDeps= Array.isArray(results[4]) ? results[4] : [];
-    DB.depGroups   = Array.isArray(results[5]) ? results[5] : [];
-    DB.depItems    = Array.isArray(results[6]) ? results[6] : [];
-    DB.teamMembers = Array.isArray(results[7]) ? results[7] : [];
-
-    if(!Array.isArray(results[0])) {
-      var errMsg = results[0].message || JSON.stringify(results[0]);
-      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Database error:</strong><br>' + errMsg + '</div>';
-      document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C">Error: ' + errMsg + '</span>';
-      return;
+    DB.squads=Array.isArray(r[0])?r[0]:[];
+    DB.useCases=Array.isArray(r[1])?r[1]:[];
+    DB.phases=Array.isArray(r[2])?r[2]:[];
+    DB.stickies=Array.isArray(r[3])?r[3]:[];
+    DB.floatingDeps=Array.isArray(r[4])?r[4]:[];
+    DB.depGroups=Array.isArray(r[5])?r[5]:[];
+    DB.depItems=Array.isArray(r[6])?r[6]:[];
+    DB.teamMembers=Array.isArray(r[7])?r[7]:[];
+    if(!DB.squads.length){
+      showErr("No data found. Check the SQL ran correctly in Supabase.");return;
     }
-
-    if(DB.squads.length === 0) {
-      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#D97706;font-size:13px"><strong>No squads found.</strong><br>The SQL seed data may not have run correctly.</div>';
-      document.getElementById("squadSelector").innerHTML = '<span style="color:#D97706">No squads found</span>';
-      return;
-    }
-
-    renderSelector();
-    renderBoard();
-  } catch(e) {
-    console.error("loadAll error:", e);
-    document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Error:</strong><br>' + e.message + '</div>';
-    document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C">Error: ' + e.message + '</span>';
-  }
+    renderSelector();renderBoard();
+  }catch(e){showErr(e.message);}
+}
+function showErr(msg){
+  document.getElementById("mainBoard").innerHTML='<div style="padding:40px;color:#B91C1C;text-align:center"><strong>Error:</strong><br>'+msg+'</div>';
+  document.getElementById("squadSelector").innerHTML='<span style="color:#B91C1C">'+msg+'</span>';
 }
 
-
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function sq() { return DB.squads[currentSquad] || {}; }
-function ucsFor(sqId) { return DB.useCases.filter(function(u){return u.squad_id===sqId}); }
-function phasesFor(ucId) { return DB.phases.filter(function(p){return p.use_case_id===ucId}); }
-function stickiesFor(phId) { return DB.stickies.filter(function(s){return s.phase_id===phId}); }
-function floatFor(ucId) { return DB.floatingDeps.filter(function(f){return f.use_case_id===ucId}); }
-function groupsFor(sqId) { return DB.depGroups.filter(function(g){return g.squad_id===sqId}); }
-function itemsFor(gId) { return DB.depItems.filter(function(i){return i.group_id===gId}); }
-function teamFor(sqId) { return DB.teamMembers.filter(function(t){return t.squad_id===sqId}); }
-function wkIdx(wk) { return ALL_WEEKS.indexOf(wk); }
-
-function showToast(msg,isError){
-  var t=document.getElementById("toast");
-  t.textContent=msg; t.className="toast show"+(isError?" error":"");
-  setTimeout(function(){t.classList.remove("show")},4000);
-}
-function setProgress(pct,msg){
-  document.getElementById("progressBar").style.width=pct+"%";
-  if(msg) document.getElementById("progressSub").textContent=msg;
-}
-
-// ── Render selector ───────────────────────────────────────────────────────────
 function renderSelector(){
-  var el=document.getElementById("squadSelector");
-  var html="";
+  var h="";
   DB.squads.forEach(function(s,i){
-    var active=i===currentSquad;
-    html+='<button class="squad-btn" onclick="selectSquad('+i+')" style="background:'+(active?s.color:"#fff")+';color:'+(active?"#fff":s.color)+';border-color:'+s.color+'">'+s.name+'</button>';
+    var a=i===currentSquad;
+    h+='<button class="squad-btn" onclick="selectSquad('+i+')" style="background:'+(a?s.color:"#fff")+';color:'+(a?"#fff":s.color)+';border:1.5px solid '+s.color+'">'+s.name+'</button>';
   });
-  html+='<button onclick="toggleEdit()" style="margin-left:auto;background:'+(editMode?"#FCD34D":"rgba(255,255,255,.7)")+';color:'+(editMode?"#4C1D95":"#374151")+';border:1.5px solid #D1D5DB;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700">'+(editMode?"&#10003; Save Changes":"&#9998; Edit")+'</button>';
-  el.innerHTML=html;
+  h+='<button onclick="toggleEdit()" style="margin-left:auto;background:'+(editMode?"#FCD34D":"rgba(255,255,255,.7)")+';color:'+(editMode?"#4C1D95":"#374151")+';border:1.5px solid #D1D5DB;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700">'+(editMode?"&#10003; Save":"&#9998; Edit")+'</button>';
+  document.getElementById("squadSelector").innerHTML=h;
 }
 
-// ── Render board ──────────────────────────────────────────────────────────────
 function renderBoard(){
-  var s=sq(); if(!s.id){return;}
-  var board=document.getElementById("mainBoard");
-  var html="";
-
+  var s=sq();if(!s.id)return;
+  var h="";
   // Header
-  html+='<div class="squad-header-bar" style="background:'+s.color+'">';
-  html+='<h2>'+s.name+'</h2>';
-  html+='<div style="display:flex;align-items:center;gap:10px">';
-  // Confidence buttons
-  html+='<div style="background:rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;display:flex;align-items:center;gap:5px"><span style="color:#DDD6FE;font-size:10px">Confidence</span>';
-  for(var v=1;v<=5;v++){
-    html+='<button onclick="setConfidence('+v+')" style="width:20px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:10px;font-weight:700;background:'+(s.confidence>=v?"#FCD34D":"rgba(255,255,255,.25)")+';color:'+(s.confidence>=v?"#92400E":"rgba(255,255,255,.6)")+'">'+v+'</button>';
-  }
-  html+='</div></div></div>';
+  h+='<div class="squad-header-bar" style="background:'+s.color+'">';
+  h+='<h2 '+(editMode?'contenteditable="true" onblur="saveSq(\'name\',this.innerText)"':'')+' style="color:#fff;font-size:18px;font-weight:800">'+s.name+'</h2>';
+  h+='<div style="display:flex;align-items:center;gap:10px"><div style="background:rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;display:flex;align-items:center;gap:5px"><span style="color:#DDD6FE;font-size:10px">Confidence</span>';
+  for(var v=1;v<=5;v++) h+='<button onclick="setConf('+v+')" style="width:20px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:10px;font-weight:700;background:'+(s.confidence>=v?"#FCD34D":"rgba(255,255,255,.25)")+';color:'+(s.confidence>=v?"#92400E":"rgba(255,255,255,.6)")+'">'+v+'</button>';
+  h+='</div></div></div>';
 
   // Top panels
-  html+='<div class="board-top">';
-
-  // Team capacity
-  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Team Capacity</div><div class="panel-body"><div class="sticky-grid">';
-  teamFor(s.id).forEach(function(m){
-    html+='<div class="sticky yellow" style="font-size:9px"><strong>'+m.role+'</strong>'+(m.name?'<br>'+m.name:'')+'</div>';
+  h+='<div class="board-top">';
+  h+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Team Capacity</div><div class="panel-body"><div class="sticky-grid">';
+  tmFor(s.id).forEach(function(m,i){
+    h+='<div class="sticky yellow" style="font-size:9px"><strong '+(editMode?'contenteditable="true" onblur="saveTm('+m.id+',\'role\',this.innerText)"':'')+'>'+m.role+'</strong>';
+    if(m.name||editMode) h+='<br><span '+(editMode?'contenteditable="true" onblur="saveTm('+m.id+',\'name\',this.innerText)"':'')+'>'+m.name+'</span>';
+    if(editMode) h+=' <button class="btn-del" onclick="delTm('+m.id+')">&#10005;</button>';
+    h+='</div>';
   });
-  html+='</div></div></div>';
+  if(editMode) h+='<button class="btn-add" onclick="addTm(\''+s.id+'\')">+ member</button>';
+  h+='</div></div></div>';
 
-  // Overview
-  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">'+s.name+' &mdash; Workstream Overview</div><div class="panel-body" style="font-size:10px;color:#6B7280;padding:10px"><em>Workstream overview &mdash; summarise key goals here</em></div></div>';
+  h+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">'+s.name+' &mdash; Workstream Overview</div>';
+  h+='<div class="panel-body" style="font-size:10px;color:#374151;padding:10px" '+(editMode?'contenteditable="true" onblur="saveSq(\'notes\',this.innerText)"':'')+'>'+( s.notes||'<em style="color:#9CA3AF">Add workstream overview here...</em>')+'</div></div>';
 
   // Deps summary
-  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Dependencies &amp; Risks</div><div class="panel-body">';
-  var risks=[], deps=[];
-  groupsFor(s.id).forEach(function(g){ itemsFor(g.id).forEach(function(it){ if(it.color==="pink") risks.push(it.text); else deps.push(it.text); }); });
-  if(risks.length){html+='<div style="font-size:9px;font-weight:700;color:#4C1D95;margin-bottom:4px">RISKS</div>'; risks.slice(0,2).forEach(function(r){html+='<div class="sticky pink" style="margin-bottom:4px;font-size:9px">'+r+'</div>';});}
-  if(deps.length){html+='<div style="font-size:9px;font-weight:700;color:#4C1D95;margin:5px 0 4px">DEPS</div>'; deps.slice(0,2).forEach(function(d){html+='<div class="sticky yellow" style="margin-bottom:4px;font-size:9px">'+d+'</div>';});}
-  html+='</div></div>';
+  h+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Dependencies &amp; Risks</div><div class="panel-body">';
+  var risks=[],deps=[];
+  grFor(s.id).forEach(function(g){itFor(g.id).forEach(function(it){if(it.color==="pink")risks.push(it.text);else deps.push(it.text);});});
+  risks.slice(0,2).forEach(function(r){h+='<div class="sticky pink" style="margin-bottom:4px;font-size:9px;display:block">'+r+'</div>';});
+  deps.slice(0,2).forEach(function(d){h+='<div class="sticky yellow" style="margin-bottom:4px;font-size:9px;display:block">'+d+'</div>';});
+  h+='</div></div>';
 
-  // Notes
-  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Notes</div><div class="panel-body" style="font-size:9.5px;color:#374151">'+(s.notes||'<em style="color:#9CA3AF">Notes area</em>')+'</div></div>';
-  html+='</div>';
+  h+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Notes</div>';
+  h+='<div class="panel-body" style="font-size:9.5px;color:#374151" '+(editMode?'contenteditable="true" onblur="saveSq(\'notes\',this.innerText)"':'')+'>'+( s.notes||'<em style="color:#9CA3AF">Notes...</em>')+'</div></div>';
+  h+='</div>';
 
   // Sprint grid
-  var gridCols=LABEL_W+"px "+ALL_WEEKS.map(function(){return WEEK_W+"px";}).join(" ");
-  html+='<div class="sprint-grid-wrap">';
+  var gCols=LBL+"px "+ALL_WEEKS.map(function(){return WK+"px";}).join(" ");
+  h+='<div class="sprint-grid-wrap">';
+  h+='<div style="display:grid;grid-template-columns:'+LBL+'px '+SPRINTS.map(function(sp){return sp.weeks.length*WK+"px";}).join(" ")+'"><div style="border-right:1px solid #E5E0F8;background:#F8F6FF"></div>';
+  SPRINTS.forEach(function(sp){h+='<div class="sprint-header-cell '+(sp.name==="BRP"?"brp":"")+'">'+sp.name+'</div>';});
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:'+gCols+'"><div style="border-right:1px solid #E5E0F8;background:#F3F0FF;padding:4px 6px;font-size:9px;color:#6B7280;font-weight:600">Use Case</div>';
+  ALL_WEEKS.forEach(function(wk){h+='<div class="week-cell">'+wk+'</div>';});
+  h+='</div>';
 
-  // Sprint header row
-  html+='<div style="display:grid;grid-template-columns:'+LABEL_W+'px '+SPRINTS.map(function(sp){return sp.weeks.length*WEEK_W+"px";}).join(" ")+'"><div style="border-right:1px solid #E5E0F8;background:#F8F6FF"></div>';
-  SPRINTS.forEach(function(sp){
-    html+='<div class="sprint-header-cell '+(sp.name==="BRP"?"brp":"")+'">'+sp.name+'</div>';
-  });
-  html+='</div>';
-
-  // Week subheaders
-  html+='<div style="display:grid;grid-template-columns:'+gridCols+'"><div style="border-right:1px solid #E5E0F8;background:#F3F0FF;padding:4px 6px;font-size:9px;color:#6B7280;font-weight:600">Use Case</div>';
-  ALL_WEEKS.forEach(function(wk){html+='<div class="week-cell">'+wk+'</div>';});
-  html+='</div>';
-
-  // Use case rows
-  var ucs=ucsFor(s.id);
-  ucs.forEach(function(uc){
-    var phases=phasesFor(uc.id);
-    var maxPhaseRow=0;
-    phases.forEach(function(ph,pi){maxPhaseRow=Math.max(maxPhaseRow,pi);});
-    var rowHeight=Math.max(160, (maxPhaseRow+1)*100+20);
-
-    html+='<div style="display:grid;grid-template-columns:'+LABEL_W+'px 1fr;border-bottom:2px solid '+s.color+'44;min-height:'+rowHeight+'px">';
-
-    // Label
-    html+='<div class="uc-label"><div class="uc-label-badge" style="background:'+s.color+'">'+uc.name+'</div><div class="uc-label-desc">'+uc.description+'</div>';
+  // UC rows
+  ucsFor(s.id).forEach(function(uc){
+    var phases=phFor(uc.id);
+    var rowH=Math.max(180,phases.length*105+20);
+    h+='<div style="display:grid;grid-template-columns:'+LBL+'px 1fr;border-bottom:2px solid '+s.color+'44;min-height:'+rowH+'px">';
+    h+='<div class="uc-label" style="padding:10px;border-right:1px solid #E5E0F8;display:flex;flex-direction:column;gap:4px;background:#FAFAFA">';
+    h+='<div style="background:'+s.color+';border-radius:5px;padding:5px 8px;font-size:10px;font-weight:700;color:#fff;text-align:center;line-height:1.3" '+(editMode?'contenteditable="true" onblur="saveUC(\''+uc.id+'\',\'name\',this.innerText)"':'')+'>'+uc.name+'</div>';
+    h+='<div style="font-size:9.5px;color:#6B7280;line-height:1.4;margin-top:4px" '+(editMode?'contenteditable="true" onblur="saveUC(\''+uc.id+'\',\'description\',this.innerText)"':'')+'>'+uc.description+'</div>';
     if(editMode){
-      html+='<button onclick="addPhase(\''+uc.id+'\')" style="margin-top:6px;background:#EDE9FE;color:#4C1D95;border:1px dashed #7C3AED;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:9px;font-weight:700">+ Phase</button>';
+      h+='<button class="btn-add" onclick="addPhase(\''+uc.id+'\')">+ phase</button>';
+      h+='<button class="btn-del" style="margin-top:4px" onclick="delUC(\''+uc.id+'\')">&#10005; Remove UC</button>';
     }
-    html+='</div>';
+    h+='</div>';
 
-    // Canvas
-    html+='<div style="position:relative;overflow:visible">';
-    // BG columns
-    html+='<div style="display:grid;grid-template-columns:'+ALL_WEEKS.map(function(){return WEEK_W+"px";}).join(" ")+';position:absolute;inset:0">';
+    // Canvas with BG columns
+    h+='<div style="position:relative;overflow:visible" id="canvas-'+uc.id+'">';
+    h+='<div style="display:grid;grid-template-columns:'+ALL_WEEKS.map(function(){return WK+"px";}).join(" ")+';position:absolute;inset:0;pointer-events:none">';
     ALL_WEEKS.forEach(function(wk,wi){
-      var isBRP=wk==="wk11";
-      html+='<div style="border-right:1px solid #EEE;background:'+(isBRP?"#FFFBEB":(wi%2===0?"#FAFAFA":"#fff"))+';height:100%"></div>';
+      h+='<div style="border-right:1px solid #EEE;background:'+(wk==="wk11"?"#FFFBEB":(wi%2===0?"#FAFAFA":"#fff"))+';height:100%"></div>';
     });
-    html+='</div>';
+    h+='</div>';
 
     // Phase boxes
     phases.forEach(function(ph,pi){
-      var si=wkIdx(ph.start_week), ei=wkIdx(ph.end_week);
-      if(si<0)si=0; if(ei<0)ei=ALL_WEEKS.length-1;
-      var left=si*WEEK_W, width=(ei-si+1)*WEEK_W-8, top=10+pi*95;
-      var stickies=stickiesFor(ph.id);
-
-      html+='<div class="phase-box" style="left:'+left+'px;width:'+width+'px;top:'+top+'px;min-height:80px">';
-      html+='<div class="phase-box-header"><span style="font-size:14px">&#128100;</span> '+ph.name+' <span class="phase-owner">'+ph.owner+'</span>';
-      if(editMode) html+='<button onclick="deletePhase('+ph.id+',\''+uc.id+'\')" style="margin-left:auto;background:#FEE2E2;color:#B91C1C;border:none;border-radius:3px;padding:1px 5px;cursor:pointer;font-size:8px">&#10005;</button>';
-      html+='</div>';
-
-      if(ph.big_label){
-        html+='<div class="phase-label-big '+ph.big_color+'">'+ph.big_label+'</div>';
-      }
-
-      html+='<div class="phase-stickies">';
-      stickies.forEach(function(st){
-        var cls = editMode ? "sticky yellow editable-sticky" : "sticky yellow";
-        var attr = editMode ? " contenteditable=\"true\" onblur=\"updateSticky(" + st.id + ",this.textContent)\"" : "";
-        html += "<div class=\"sticky-wrap\">";
-        html += "<div class=\"" + cls + "\"" + attr + ">" + st.text + "</div>";
-        if(editMode) html += "<button class=\"btn-del-sticky\" onclick=\"deleteSticky(" + st.id + ")\">&#10005;</button>";
-        html += "</div>";
+      var si=wkI(ph.start_week),ei=wkI(ph.end_week);
+      if(si<0)si=0;if(ei<0)ei=ALL_WEEKS.length-1;
+      var left=si*WK,width=(ei-si+1)*WK-8,top=10+pi*95;
+      var sts=stFor(ph.id);
+      h+='<div class="phase-box" id="ph-'+ph.id+'" data-ph="'+ph.id+'" data-uc="'+uc.id+'" style="left:'+left+'px;width:'+width+'px;top:'+top+'px">';
+      h+='<div class="phase-box-header">';
+      h+='<span style="font-size:13px">&#128100;</span> ';
+      h+='<span '+(editMode?'contenteditable="true" onblur="savePh('+ph.id+',\'name\',this.innerText)"':'')+' style="flex:1">'+ph.name+'</span> ';
+      h+='<span class="phase-owner" '+(editMode?'contenteditable="true" onblur="savePh('+ph.id+',\'owner\',this.innerText)"':'')+'>'+ph.owner+'</span>';
+      if(editMode) h+='<button class="btn-del" onclick="delPh('+ph.id+',\''+uc.id+'\')">&#10005;</button>';
+      h+='</div>';
+      if(ph.big_label) h+='<div class="phase-label-big '+ph.big_color+'" '+(editMode?'contenteditable="true" onblur="savePh('+ph.id+',\'big_label\',this.innerText)"':'')+'>'+ph.big_label+'</div>';
+      h+='<div class="phase-stickies">';
+      sts.forEach(function(st){
+        h+='<div class="sticky yellow" style="font-size:8.5px;min-width:60px;max-width:100px;position:relative" '+(editMode?'contenteditable="true" onblur="saveSt('+st.id+',this.innerText)"':'')+'>'+st.text;
+        if(editMode) h+='<button class="btn-del" style="position:absolute;top:-5px;right:-5px;border-radius:50%;width:14px;height:14px;font-size:7px;padding:0;display:flex;align-items:center;justify-content:center" onclick="delSt('+st.id+')">&#10005;</button>';
+        h+='</div>';
       });
-      if(editMode) html+='<button class="add-sticky-btn" onclick="addSticky('+ph.id+')">+ sticky</button>';
-      html+='</div>';
-      html+='</div>';
+      if(editMode) h+='<button class="btn-add" onclick="addSt('+ph.id+')">+ sticky</button>';
+      h+='</div></div>';
     });
 
     // Floating deps
-    var fdeps=floatFor(uc.id);
-    if(fdeps.length||editMode){
-      html+='<div style="position:absolute;right:-125px;top:8px;width:115px;display:flex;flex-direction:column;gap:4px">';
-      fdeps.forEach(function(fd){
-        html+='<div class="sticky-wrap"><div class="sticky yellow" style="font-size:8.5px">'+(editMode?'<span contenteditable="true" onblur="updateFloatDep('+fd.id+',this.textContent)">'+fd.text+'</span>':fd.text)+'</div>';
-        if(editMode) html+='<button class="btn-del-sticky" onclick="deleteFloatDep('+fd.id+',\''+uc.id+'\')">&#10005;</button>';
-        html+='</div>';
+    var fds=fdFor(uc.id);
+    if(fds.length||editMode){
+      h+='<div style="position:absolute;right:-125px;top:8px;width:115px;display:flex;flex-direction:column;gap:4px;z-index:5">';
+      fds.forEach(function(fd){
+        h+='<div class="sticky yellow" style="font-size:8.5px;display:block" '+(editMode?'contenteditable="true" onblur="saveFd('+fd.id+',this.innerText)"':'')+'>'+fd.text;
+        if(editMode) h+='<button class="btn-del" onclick="delFd('+fd.id+')">&#10005;</button>';
+        h+='</div>';
       });
-      if(editMode) html+='<button class="add-sticky-btn" onclick="addFloatDep(\''+uc.id+'\')">+ dep</button>';
-      html+='</div>';
+      if(editMode) h+='<button class="btn-add" onclick="addFd(\''+uc.id+'\')">+ dep</button>';
+      h+='</div>';
     }
-
-    html+='</div></div>';
+    h+='</div></div>';
   });
 
-  if(editMode){
-    html+='<div style="padding:10px;background:#F8F6FF;border-top:1px dashed #DDD6FE"><button onclick="addUseCase(\''+s.id+'\')" style="background:#EDE9FE;color:#4C1D95;border:1px dashed #7C3AED;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700">+ Add Use Case</button></div>';
-  }
-
-  html+='</div>'; // sprint-grid-wrap
+  if(editMode) h+='<div style="padding:10px;background:#F8F6FF;border-top:1px dashed #DDD6FE"><button class="btn-add" onclick="addUC(\''+s.id+'\')">+ Add Use Case</button></div>';
+  h+='</div>';
 
   // Side panels
-  html+='<div class="side-panels">';
-  html+='<div class="deps-panel"><div class="deps-panel-title">Dependencies &amp; Risks</div><div class="deps-panel-body">';
-  groupsFor(s.id).forEach(function(g){
-    html+='<div class="deps-group"><div class="deps-group-label">'+g.label+'</div><div class="deps-sticky-row">';
-    itemsFor(g.id).forEach(function(it){
-      html+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:130px">'+(editMode?'<span contenteditable="true" onblur="updateDepItem('+it.id+',this.textContent)">'+it.text+'</span>':it.text)+'</div>';
+  h+='<div class="side-panels">';
+  h+='<div class="deps-panel"><div class="deps-panel-title">Dependencies &amp; Risks</div><div class="deps-panel-body">';
+  grFor(s.id).forEach(function(g){
+    h+='<div class="deps-group"><div class="deps-group-label" '+(editMode?'contenteditable="true" onblur="saveGr('+g.id+',this.innerText)"':'')+'>'+g.label+'</div><div class="deps-sticky-row">';
+    itFor(g.id).forEach(function(it){
+      h+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:130px" '+(editMode?'contenteditable="true" onblur="saveIt('+it.id+',this.innerText)"':'')+'>'+it.text;
+      if(editMode) h+='<button class="btn-del" onclick="delIt('+it.id+')">&#10005;</button>';
+      h+='</div>';
     });
-    if(editMode) html+='<button class="add-sticky-btn" onclick="addDepItem('+g.id+')">+ item</button>';
-    html+='</div></div>';
+    if(editMode) h+='<button class="btn-add" onclick="addIt('+g.id+')">+ item</button>';
+    h+='</div></div>';
   });
-  html+='</div></div>';
-  html+='<div class="stories-panel"><div class="stories-panel-title">User Stories</div><div class="stories-panel-body">';
-  for(var i=0;i<12;i++) html+='<div class="story-empty"></div>';
-  html+='</div></div>';
-  html+='</div>';
+  if(editMode) h+='<button class="btn-add" onclick="addGr(\''+s.id+'\')">+ group</button>';
+  h+='</div></div>';
+  h+='<div class="stories-panel"><div class="stories-panel-title">User Stories</div><div class="stories-panel-body">';
+  for(var i=0;i<12;i++) h+='<div class="story-empty"></div>';
+  h+='</div></div>';
+  h+='</div>';
 
-  board.innerHTML=html;
+  document.getElementById("mainBoard").innerHTML=h;
+  if(editMode) initDrag();
+}
+
+// ── Drag & drop phase boxes ────────────────────────────────────────────────────
+function initDrag(){
+  document.querySelectorAll(".phase-box").forEach(function(box){
+    box.addEventListener("mousedown",startDrag);
+    box.addEventListener("touchstart",startDragTouch,{passive:false});
+  });
+}
+var dragState=null;
+function startDrag(e){
+  if(e.target.getAttribute("contenteditable")||e.target.tagName==="BUTTON") return;
+  e.preventDefault();
+  var box=e.currentTarget;
+  dragState={box:box,startX:e.clientX,startY:e.clientY,origLeft:parseInt(box.style.left),origTop:parseInt(box.style.top)};
+  box.classList.add("dragging");
+  document.addEventListener("mousemove",onDrag);
+  document.addEventListener("mouseup",endDrag);
+}
+function startDragTouch(e){
+  if(e.target.getAttribute("contenteditable")||e.target.tagName==="BUTTON") return;
+  e.preventDefault();
+  var t=e.touches[0],box=e.currentTarget;
+  dragState={box:box,startX:t.clientX,startY:t.clientY,origLeft:parseInt(box.style.left),origTop:parseInt(box.style.top)};
+  box.classList.add("dragging");
+  document.addEventListener("touchmove",onDragTouch,{passive:false});
+  document.addEventListener("touchend",endDragTouch);
+}
+function onDrag(e){
+  if(!dragState) return;
+  var dx=e.clientX-dragState.startX,dy=e.clientY-dragState.startY;
+  dragState.box.style.left=(dragState.origLeft+dx)+"px";
+  dragState.box.style.top=(dragState.origTop+dy)+"px";
+}
+function onDragTouch(e){
+  if(!dragState) return;
+  e.preventDefault();
+  var t=e.touches[0],dx=t.clientX-dragState.startX,dy=t.clientY-dragState.startY;
+  dragState.box.style.left=(dragState.origLeft+dx)+"px";
+  dragState.box.style.top=(dragState.origTop+dy)+"px";
+}
+function endDrag(e){
+  if(!dragState) return;
+  dragState.box.classList.remove("dragging");
+  // Snap to nearest week column
+  var newLeft=parseInt(dragState.box.style.left);
+  var snapWk=Math.max(0,Math.min(ALL_WEEKS.length-1,Math.round(newLeft/WK)));
+  var snappedLeft=snapWk*WK;
+  dragState.box.style.left=snappedLeft+"px";
+  // Save new position
+  var phId=parseInt(dragState.box.getAttribute("data-ph"));
+  var ph=DB.phases.find(function(p){return p.id===phId});
+  if(ph){
+    var endWkI=wkI(ph.end_week),startWkI=wkI(ph.start_week);
+    var span=endWkI-startWkI;
+    var newStartWk=ALL_WEEKS[snapWk];
+    var newEndWk=ALL_WEEKS[Math.min(ALL_WEEKS.length-1,snapWk+span)];
+    ph.start_week=newStartWk; ph.end_week=newEndWk;
+    dbPatch("phases","id",phId,{start_week:newStartWk,end_week:newEndWk});
+    showToast("Phase moved to "+newStartWk);
+  }
+  document.removeEventListener("mousemove",onDrag);
+  document.removeEventListener("mouseup",endDrag);
+  dragState=null;
+}
+function endDragTouch(e){
+  endDrag(e);
+  document.removeEventListener("touchmove",onDragTouch);
+  document.removeEventListener("touchend",endDragTouch);
 }
 
 // ── Program board ─────────────────────────────────────────────────────────────
 function renderProgramBoard(){
-  var el=document.getElementById("programBoard");
-  var html='<div style="background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow-x:auto">';
-  html+='<div style="font-weight:800;font-size:15px;color:#4C1D95;margin-bottom:12px">Program Board &mdash; All Squads</div>';
-  html+='<table style="border-collapse:collapse;width:100%;font-size:10px;min-width:900px"><thead><tr>';
-  html+='<th style="background:#4C1D95;color:#fff;padding:7px 10px;text-align:left;min-width:130px">Squad</th>';
-  SPRINTS.forEach(function(sp){
-    html+='<th style="background:'+(sp.name==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(sp.name==="BRP"?"#1F2937":"#fff")+';padding:7px 4px;text-align:center;min-width:'+(sp.weeks.length*55)+'px" colspan="'+sp.weeks.length+'">'+sp.name+'</th>';
-  });
-  html+='</tr><tr><td style="background:#F3F0FF;padding:3px 8px;font-size:8px;color:#6B7280"></td>';
-  ALL_WEEKS.forEach(function(wk){html+='<td style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border:1px solid #E5E0F8">'+wk+'</td>';});
-  html+='</tr></thead><tbody>';
+  var h='<div style="background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow-x:auto">';
+  h+='<div style="font-weight:800;font-size:15px;color:#4C1D95;margin-bottom:12px">Program Board &mdash; All Squads</div>';
+  h+='<table style="border-collapse:collapse;width:100%;font-size:10px;min-width:900px"><thead><tr>';
+  h+='<th style="background:#4C1D95;color:#fff;padding:7px 10px;text-align:left;min-width:130px">Squad</th>';
+  SPRINTS.forEach(function(sp){h+='<th style="background:'+(sp.name==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(sp.name==="BRP"?"#1F2937":"#fff")+';padding:7px 4px;text-align:center" colspan="'+sp.weeks.length+'">'+sp.name+'</th>';});
+  h+='</tr><tr><td style="background:#F3F0FF;padding:3px 8px;font-size:8px;color:#6B7280"></td>';
+  ALL_WEEKS.forEach(function(wk){h+='<td style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border:1px solid #E5E0F8">'+wk+'</td>';});
+  h+='</tr></thead><tbody>';
   DB.squads.forEach(function(s,qi){
-    html+='<tr><td style="background:'+s.color+';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;border-bottom:2px solid #fff">'+s.name+'</td>';
+    h+='<tr><td style="background:'+s.color+';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;border-bottom:2px solid #fff">'+s.name+'</td>';
     ALL_WEEKS.forEach(function(wk,wi){
       var cells="";
       ucsFor(s.id).forEach(function(uc){
-        phasesFor(uc.id).forEach(function(ph){
-          var si=wkIdx(ph.start_week),ei=wkIdx(ph.end_week);
+        phFor(uc.id).forEach(function(ph){
+          var si=wkI(ph.start_week),ei=wkI(ph.end_week);
           if(si<=wi&&wi<=ei) cells+='<div style="background:'+s.color+';color:#fff;border-radius:3px;padding:2px 3px;margin-bottom:2px;font-size:7px;font-weight:600">'+uc.name.split(" ").slice(0,2).join(" ")+'</div>';
         });
       });
-      html+='<td style="background:'+(qi%2===0?"#FAFAFA":"#fff")+';border:1px solid #EEE;padding:3px;vertical-align:top;min-width:55px">'+cells+'</td>';
+      h+='<td style="background:'+(qi%2===0?"#FAFAFA":"#fff")+';border:1px solid #EEE;padding:3px;vertical-align:top;min-width:55px">'+cells+'</td>';
     });
-    html+='</tr>';
+    h+='</tr>';
   });
-  html+='</tbody></table></div>';
-  el.innerHTML=html;
+  h+='</tbody></table></div>';
+  document.getElementById("programBoard").innerHTML=h;
 }
 
-// ── Deps view ─────────────────────────────────────────────────────────────────
 function renderDepsView(){
-  var el=document.getElementById("depsView");
-  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">';
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">';
   DB.squads.forEach(function(s){
-    html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid '+s.color+'44">';
-    html+='<div style="background:'+s.color+';padding:10px 14px"><div style="color:#fff;font-weight:700;font-size:13px">'+s.name+'</div></div><div style="padding:12px">';
-    groupsFor(s.id).forEach(function(g){
-      html+='<div style="font-weight:700;font-size:9.5px;color:#4C1D95;margin-bottom:5px;text-transform:uppercase">'+g.label+'</div>';
-      html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">';
-      itemsFor(g.id).forEach(function(it){ html+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:200px">'+it.text+'</div>'; });
-      html+='</div>';
+    h+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid '+s.color+'44">';
+    h+='<div style="background:'+s.color+';padding:10px 14px"><div style="color:#fff;font-weight:700;font-size:13px">'+s.name+'</div></div><div style="padding:12px">';
+    grFor(s.id).forEach(function(g){
+      h+='<div style="font-weight:700;font-size:9.5px;color:#4C1D95;margin-bottom:5px;text-transform:uppercase">'+g.label+'</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">';
+      itFor(g.id).forEach(function(it){h+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:200px">'+it.text+'</div>';});
+      h+='</div>';
     });
-    html+='</div></div>';
+    h+='</div></div>';
   });
-  html+='</div>';
-  el.innerHTML=html;
+  h+='</div>';
+  document.getElementById("depsView").innerHTML=h;
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
-function selectSquad(i){ currentSquad=i; renderSelector(); renderBoard(); }
+function selectSquad(i){currentSquad=i;renderSelector();renderBoard();}
 function switchView(v,btn){
   currentView=v;
   document.querySelectorAll(".nav-tab").forEach(function(t){t.classList.remove("active")});
@@ -507,116 +451,197 @@ function switchView(v,btn){
 function toggleEdit(){
   editMode=!editMode;
   document.getElementById("editBanner").className="edit-banner"+(editMode?" show":"");
-  renderSelector();
-  renderBoard();
-  if(!editMode) showToast("Changes saved to database!");
+  renderSelector();renderBoard();
+  if(!editMode) showToast("All changes saved to database!");
 }
-async function setConfidence(v){
+async function setConf(v){
   var s=sq();
-  await fetch(SUPA_URL+"/rest/v1/squads?id=eq."+s.id, {method:"PATCH", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"}, body:JSON.stringify({confidence:v})});
-  s.confidence=v;
-  renderSelector();
-  renderBoard();
-  showToast("Confidence updated to "+v+"/5");
+  await dbPatch("squads","id",s.id,{confidence:v});
+  s.confidence=v;renderSelector();renderBoard();
+  showToast("Confidence: "+v+"/5");
 }
 
-// ── DB mutations ──────────────────────────────────────────────────────────────
-async function updateSticky(id,text){
-  await fetch(SUPA_URL+"/rest/v1/stickies?id=eq."+id, {method:"PATCH", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"}, body:JSON.stringify({text:text.trim()})});
-  var s=DB.stickies.find(function(x){return x.id===id});
-  if(s) s.text=text.trim();
+// ── Save functions ─────────────────────────────────────────────────────────────
+async function saveSq(col,val){
+  var s=sq(); s[col]=val.trim();
+  await dbPatch("squads","id",s.id,JSON.parse('{"'+col+'":"'+val.trim().replace(/"/g,'\\"')+'"}'));
 }
-async function addSticky(phaseId){
-  var text=prompt("New sticky text:");
-  if(!text) return;
-  var res=await fetch(SUPA_URL+"/rest/v1/stickies", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({phase_id:phaseId,text:text,color:"yellow",sort_order:999})});
-  var data=await res.json();
-  if(Array.isArray(data)&&data[0]) DB.stickies.push(data[0]);
-  renderBoard();
-  showToast("Sticky added!");
+async function saveUC(id,col,val){
+  var uc=DB.useCases.find(function(u){return u.id===id}); if(uc) uc[col]=val.trim();
+  var body={}; body[col]=val.trim();
+  await dbPatch("use_cases","id",id,body);
 }
-async function deleteSticky(id){
-  if(!confirm("Delete this sticky?")) return;
-  await fetch(SUPA_URL+"/rest/v1/stickies?id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
+async function savePh(id,col,val){
+  var ph=DB.phases.find(function(p){return p.id===id}); if(ph) ph[col]=val.trim();
+  var body={}; body[col]=val.trim();
+  await dbPatch("phases","id",id,body);
+}
+async function saveSt(id,val){
+  var st=DB.stickies.find(function(s){return s.id===id}); if(st) st.text=val.trim();
+  await dbPatch("stickies","id",id,{text:val.trim()});
+}
+async function saveFd(id,val){
+  var fd=DB.floatingDeps.find(function(f){return f.id===id}); if(fd) fd.text=val.trim();
+  await dbPatch("floating_deps","id",id,{text:val.trim()});
+}
+async function saveGr(id,val){
+  var g=DB.depGroups.find(function(x){return x.id===id}); if(g) g.label=val.trim();
+  await dbPatch("dep_groups","id",id,{label:val.trim()});
+}
+async function saveIt(id,val){
+  var it=DB.depItems.find(function(x){return x.id===id}); if(it) it.text=val.trim();
+  await dbPatch("dep_items","id",id,{text:val.trim()});
+}
+async function saveTm(id,col,val){
+  var tm=DB.teamMembers.find(function(t){return t.id===id}); if(tm) tm[col]=val.trim();
+  var body={}; body[col]=val.trim();
+  await dbPatch("team_members","id",id,body);
+}
+
+// ── Add/Delete functions ──────────────────────────────────────────────────────
+async function addSt(phId){
+  var t=prompt("New sticky text:"); if(!t) return;
+  var d=await dbPost("stickies",{phase_id:phId,text:t,color:"yellow",sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.stickies.push(d[0]);
+  renderBoard(); showToast("Sticky added!");
+}
+async function delSt(id){
+  if(!confirm("Delete sticky?")) return;
+  await dbDelete("stickies","id",id);
   DB.stickies=DB.stickies.filter(function(s){return s.id!==id});
   renderBoard();
 }
-async function addFloatDep(ucId){
-  var text=prompt("New floating dependency:");
-  if(!text) return;
-  var res=await sb.from("floating_deps").insert({use_case_id:ucId,text:text,sort_order:999}).select();
-  if(res.data) DB.floatingDeps.push(res.data[0]);
+async function addFd(ucId){
+  var t=prompt("New floating dependency:"); if(!t) return;
+  var d=await dbPost("floating_deps",{use_case_id:ucId,text:t,sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.floatingDeps.push(d[0]);
   renderBoard();
 }
-async function updateFloatDep(id,text){
-  await sb.from("floating_deps").update({text:text.trim()}).eq("id",id);
-  var f=DB.floatingDeps.find(function(x){return x.id===id});
-  if(f) f.text=text.trim();
-}
-async function deleteFloatDep(id){
-  await sb.from("floating_deps").delete().eq("id",id);
+async function delFd(id){
+  await dbDelete("floating_deps","id",id);
   DB.floatingDeps=DB.floatingDeps.filter(function(f){return f.id!==id});
   renderBoard();
 }
-async function addDepItem(groupId){
-  var text=prompt("New dependency/risk text:");
-  if(!text) return;
-  var color=prompt("Color? (yellow/pink/purple/green)","yellow");
-  var res=await sb.from("dep_items").insert({group_id:groupId,text:text,color:color||"yellow",sort_order:999}).select();
-  if(res.data) DB.depItems.push(res.data[0]);
-  renderBoard();
-}
-async function updateDepItem(id,text){
-  await sb.from("dep_items").update({text:text.trim()}).eq("id",id);
-  var d=DB.depItems.find(function(x){return x.id===id});
-  if(d) d.text=text.trim();
-}
-async function addUseCase(sqId){
-  var name=prompt("Use case name:");
-  if(!name) return;
-  var desc=prompt("Short description:","");
+async function addUC(sqId){
+  var n=prompt("Use case name:"); if(!n) return;
+  var desc=prompt("Description:","");
   var id=sqId+"_uc_"+Date.now();
-  var maxOrder=Math.max.apply(null,ucsFor(sqId).map(function(u){return u.sort_order||0}).concat([0]));
-  var res=await fetch(SUPA_URL+"/rest/v1/use_cases", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({id:id,squad_id:sqId,name:name,description:desc||"",sort_order:maxOrder+1})});
-  var data=await res.json();
-  if(Array.isArray(data)&&data[0]) DB.useCases.push(data[0]);
+  var d=await dbPost("use_cases",{id:id,squad_id:sqId,name:n,description:desc||"",sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.useCases.push(d[0]);
+  renderBoard(); showToast("Use case added!");
+}
+async function delUC(id){
+  if(!confirm("Delete this use case and all phases/stickies?")) return;
+  var phs=phFor(id);
+  for(var i=0;i<phs.length;i++) await dbDelete("stickies","phase_id",phs[i].id);
+  await dbDelete("phases","use_case_id",id);
+  await dbDelete("floating_deps","use_case_id",id);
+  await dbDelete("use_cases","id",id);
+  DB.phases=DB.phases.filter(function(p){return p.use_case_id!==id});
+  DB.stickies=DB.stickies.filter(function(s){return !phs.find(function(p){return p.id===s.phase_id})});
+  DB.floatingDeps=DB.floatingDeps.filter(function(f){return f.use_case_id!==id});
+  DB.useCases=DB.useCases.filter(function(u){return u.id!==id});
   renderBoard();
-  showToast("Use case added!");
 }
 async function addPhase(ucId){
-  var name=prompt("Phase name (e.g. 1. Discovery):");
-  if(!name) return;
-  var startWk=prompt("Start week (e.g. wk1):","wk1");
-  var endWk=prompt("End week (e.g. wk4):","wk4");
-  var owner=prompt("Owner:","");
-  var res=await fetch(SUPA_URL+"/rest/v1/phases", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({use_case_id:ucId,name:name,start_week:startWk||"wk1",end_week:endWk||"wk2",owner:owner||"",sort_order:999})});
-  var data=await res.json();
-  if(Array.isArray(data)&&data[0]) DB.phases.push(data[0]);
-  renderBoard();
-  showToast("Phase added!");
+  var n=prompt("Phase name (e.g. 1. Discovery):"); if(!n) return;
+  var sw=prompt("Start week (wk1-wk12):","wk1");
+  var ew=prompt("End week (wk1-wk12):","wk4");
+  var o=prompt("Owner:","");
+  var d=await dbPost("phases",{use_case_id:ucId,name:n,start_week:sw||"wk1",end_week:ew||"wk2",owner:o||"",sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.phases.push(d[0]);
+  renderBoard(); showToast("Phase added!");
 }
-async function deletePhase(id,ucId){
-  if(!confirm("Delete this phase and all its stickies?")) return;
-  await fetch(SUPA_URL+"/rest/v1/stickies?phase_id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
-  await fetch(SUPA_URL+"/rest/v1/phases?id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
+async function delPh(id,ucId){
+  if(!confirm("Delete phase and its stickies?")) return;
+  await dbDelete("stickies","phase_id",id);
+  await dbDelete("phases","id",id);
   DB.stickies=DB.stickies.filter(function(s){return s.phase_id!==id});
   DB.phases=DB.phases.filter(function(p){return p.id!==id});
   renderBoard();
 }
+async function addGr(sqId){
+  var l=prompt("Group label:"); if(!l) return;
+  var d=await dbPost("dep_groups",{squad_id:sqId,label:l,sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.depGroups.push(d[0]);
+  renderBoard();
+}
+async function addIt(gId){
+  var t=prompt("Dependency/risk text:"); if(!t) return;
+  var c=prompt("Colour (yellow/pink/purple/green):","yellow");
+  var d=await dbPost("dep_items",{group_id:gId,text:t,color:c||"yellow",sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.depItems.push(d[0]);
+  renderBoard();
+}
+async function delIt(id){
+  await dbDelete("dep_items","id",id);
+  DB.depItems=DB.depItems.filter(function(x){return x.id!==id});
+  renderBoard();
+}
+async function addTm(sqId){
+  var r=prompt("Role:"); if(!r) return;
+  var n=prompt("Name:","");
+  var d=await dbPost("team_members",{squad_id:sqId,role:r,name:n||"",sort_order:999});
+  if(Array.isArray(d)&&d[0]) DB.teamMembers.push(d[0]);
+  renderBoard();
+}
+async function delTm(id){
+  await dbDelete("team_members","id",id);
+  DB.teamMembers=DB.teamMembers.filter(function(t){return t.id!==id});
+  renderBoard();
+}
 
-// ── PPTX Export ───────────────────────────────────────────────────────────────
+function showToast(msg,e){
+  var t=document.getElementById("toast"); t.textContent=msg;
+  t.className="toast show"+(e?" error":"");
+  setTimeout(function(){t.classList.remove("show")},4000);
+}
+function setProgress(p,m){
+  document.getElementById("progressBar").style.width=p+"%";
+  if(m) document.getElementById("progressSub").textContent=m;
+}
+
+// ── PPTX Export — full 20 slides matching BT template ─────────────────────────
 function exportPPTX(){
   if(typeof PptxGenJS==="undefined"){showToast("PptxGenJS not loaded",true);return;}
-  var btn=document.querySelector(".btn-export");
-  btn.disabled=true;
+  var btn=document.querySelector(".btn-export"); btn.disabled=true;
   document.getElementById("progressOverlay").classList.add("show");
   setProgress(5,"Setting up...");
   setTimeout(function(){
     try{
       var pres=new PptxGenJS(); pres.layout="LAYOUT_WIDE"; pres.title="PI2 Planning Workshop";
-      var W=13.3,H=7.5,WH="FFFFFF",PUR="6B00D7",PURD="4C1D95",GOLD="FCD34D",GR5="6B7280";
+      var W=13.3,H=7.5,WH="FFFFFF",PUR="6B00D7",PURD="4C1D95",PURM="7B2FBE",PURL="EDE9FE";
+      var GOLD="FCD34D",GR1="F3F4F6",GR5="6B7280",GR7="374151",BLK="000000";
       function hdr(s,n){s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:.1,w:2.7,h:.25,align:"right"});}
-      setProgress(10,"Cover...");
+      function inter(s,text,n){
+        s.background={color:PURD};
+        s.addText(text,{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:36,fontFace:"Calibri Light",color:WH});
+        s.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
+        s.addShape(pres.shapes.RECTANGLE,{x:W-.22,y:H-.28,w:.22,h:.28,fill:{color:GOLD},line:{color:GOLD}});
+        hdr(s,n);
+      }
+      function agenda(s,title,items,n){
+        s.background={color:WH}; hdr(s,n);
+        s.addText(title,{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+        s.addShape(pres.shapes.LINE,{x:.35,y:.85,w:W-.7,h:0,line:{color:"CCCCCC",pt:.5}});
+        var rH=.72,sy=.96;
+        items.forEach(function(it,i){
+          var y=sy+i*(rH+.08);
+          var pc=it.type==="BREAK"?"9B9B9B":it.type==="BREAKOUT"?"00A550":it.type==="OBJECTIVE"?"0070C0":it.type==="BACKDROP"?GOLD:PURM;
+          var tc=it.type==="BACKDROP"?BLK:WH;
+          s.addText(it.n,{x:.35,y:y,w:.65,h:rH,fontSize:28,fontFace:"Calibri",color:BLK,bold:true,valign:"middle"});
+          s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:1.04,y:y+.06,w:.82,h:.22,fill:{color:pc},line:{color:pc},rectRadius:.04});
+          s.addText(it.type,{x:1.04,y:y+.06,w:.82,h:.22,fontSize:7,color:tc,bold:true,align:"center",valign:"middle",margin:0});
+          s.addText(it.dur,{x:1.04,y:y+.31,w:.82,h:.2,fontSize:9,color:GR5,align:"center"});
+          s.addText(it.title,{x:1.92,y:y,w:7.0,h:.32,fontSize:14,fontFace:"Calibri",color:BLK,bold:true,valign:"bottom"});
+          s.addText(it.desc,{x:1.92,y:y+.33,w:7.0,h:.36,fontSize:10,fontFace:"Calibri",color:GR5,valign:"top"});
+          s.addText(it.time,{x:W-2.2,y:y,w:2.1,h:.3,fontSize:11,color:BLK,align:"right",valign:"bottom"});
+          s.addText(it.aud,{x:W-2.2,y:y+.32,w:2.1,h:.25,fontSize:9.5,color:GR5,italic:true,align:"right"});
+          if(i<items.length-1) s.addShape(pres.shapes.LINE,{x:.35,y:y+rH+.04,w:W-.7,h:0,line:{color:"DDDDDD",pt:.4}});
+        });
+      }
+
+      setProgress(8,"Slide 1: Cover...");
       var s1=pres.addSlide(); s1.background={color:"0A0A1A"};
       s1.addText("BT Business AI Ops.",{x:.5,y:.6,w:4.5,h:.5,fontSize:20,fontFace:"Calibri Light",color:WH});
       s1.addText("PI2 Planning\nWorkshop",{x:.5,y:1.15,w:4.5,h:1.8,fontSize:38,fontFace:"Calibri Light",color:WH});
@@ -624,48 +649,258 @@ function exportPPTX(){
       s1.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
       s1.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
       s1.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
-      var slideNum=2;
-      DB.squads.forEach(function(s,qi){
-        setProgress(15+Math.round(qi/DB.squads.length*70),s.name+"...");
-        var bg=s.color.replace("#","");
-        var ss=pres.addSlide(); ss.background={color:WH}; hdr(ss,slideNum++);
-        ss.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.9,fill:{color:bg},line:{color:bg}});
-        ss.addText(s.name,{x:.3,y:0,w:10,h:.9,fontSize:22,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
-        ss.addText("Confidence: "+s.confidence+"/5",{x:W-2,y:.05,w:1.8,h:.4,fontSize:11,color:"DDD6FE",align:"right"});
-        var colW=2.5,cardH=1.4,cols=4;
-        ucsFor(s.id).slice(0,8).forEach(function(uc,ui){
-          var col=ui%cols,row=Math.floor(ui/cols);
-          var cx=.3+col*(colW+.1),cy=1.0+row*(cardH+.1);
-          ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:cardH,fill:{color:WH},line:{color:bg+"55",pt:1}});
-          ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:.06,fill:{color:bg},line:{color:bg}});
-          ss.addText(uc.name,{x:cx+.08,y:cy+.1,w:colW-.16,h:.35,fontSize:9,color:bg,bold:true});
-          ss.addText(uc.description||"",{x:cx+.08,y:cy+.45,w:colW-.16,h:.85,fontSize:7,color:"374151",valign:"top"});
+
+      setProgress(12,"Slide 2: Day 1 Agenda...");
+      agenda(pres.addSlide(),"PI Planning Agenda ( Day 1 )",[
+        {n:"01",type:"INTRO",   dur:"60 min",    title:"Pre-Planning",                            desc:"PI 1 outcome, Program backlog, capacity per squad, architecture runway & enablers, Dependency mapping draft",time:"09:00 \u2013 10:00",aud:"Team Leads, Scrum Master"},
+        {n:"02",type:"OBJECTIVE",dur:"60 min",   title:"Business Context & Vision",               desc:"Business priorities, Key outcomes expected from PI 2, Top Features and Acceptance explained",                time:"10:00 \u2013 10:30",aud:"TBD"},
+        {n:"03",type:"BREAK",  dur:"10 min",     title:"Break",                                   desc:"10 min break",                                                                                               time:"10:30 \u2013 10:40",aud:"Everyone"},
+        {n:"04",type:"BREAKOUT",dur:"2 hr 5 min",title:"Squad Breakouts: Use Case Planning",      desc:"Pick Features, Split into Stories, Identify dependencies, draft iteration plan and align sprint wise for Q2 \u2013 July, Aug, Sep",time:"10:40 \u2013 12:45",aud:"Everyone"},
+        {n:"05",type:"BREAK",  dur:"30 min",     title:"Lunch Break",                             desc:"30 mins lunchbreak",                                                                                         time:"12:45 \u2013 13:15",aud:"Everyone"},
+        {n:"06",type:"PLENARY",dur:"60 min",     title:"Squads Confirm: A rough plan of work for quarter P2 commitment",desc:"8-10 mins per team \u00b7 Plans \u00b7 showcase their P2 distributed over sprints",   time:"13:15 \u2013 14:00",aud:"Each team lead presents"},
+        {n:"07",type:"PLENARY",dur:"30 min",     title:"PI Planning Acceptance Criteria",         desc:"Captured at Jira level",                                                                                     time:"14:00 \u2013 14:30",aud:"Team leads"}
+      ],2);
+
+      setProgress(16,"Slide 3: Day 2 Agenda...");
+      agenda(pres.addSlide(),"PI Planning Agenda ( Day 2 )",[
+        {n:"08",type:"INTRO",  dur:"60 min", title:"Risk, Dependencies, Issues to be mapped",desc:"Team to mark and highlight the possible risk, issues, wait items.",  time:"09:00 \u2013 10:00",aud:"TBD"},
+        {n:"09",type:"INTRO",  dur:"2 hrs",  title:"RAID to be discussed",                  desc:"Team commit to PI goals, Confidence vote",                            time:"10:00 \u2013 10:30",aud:"TBD"},
+        {n:"10",type:"BREAK",  dur:"10 min", title:"Break",                                 desc:"10 min break",                                                        time:"10:30 \u2013 10:40",aud:"Everyone"},
+        {n:"11",type:"BACKDROP",dur:"30 min",title:"Clean the Program Board",               desc:"Non-relevant information to be cleaned up",                           time:"10:40 \u2013 12:45",aud:"Everyone"},
+        {n:"12",type:"BREAK",  dur:"30 min", title:"Lunch Break",                           desc:"30 mins lunch break",                                                 time:"12:45 \u2013 13:15",aud:"Everyone"},
+        {n:"13",type:"PLENARY",dur:"45 min", title:"Final Plan review + Confidence Vote",   desc:"Discuss on Risk, ownership, Accepted, Mitigated",                     time:"13:15 \u2013 14:00",aud:"Each team lead presents"},
+        {n:"14",type:"PLENARY",dur:"30 min", title:"Left free for any fallouts",            desc:"Anything overstretched can be compensated",                           time:"14:00 \u2013 14:30",aud:"Team leads"}
+      ],3);
+
+      setProgress(20,"Slide 4: Roadmap...");
+      var s4=pres.addSlide(); s4.background={color:WH}; hdr(s4,4);
+      s4.addText("Project timelines / Roadmap / related structure to be put. \u2013 60 min",{x:.35,y:2.8,w:W-.7,h:.8,fontSize:28,fontFace:"Calibri Light",color:BLK});
+
+      setProgress(24,"Slide 5: PI1 Recap...");
+      var s5=pres.addSlide(); s5.background={color:WH}; hdr(s5,5);
+      s5.addText("Recap \u2013 PI1 Commitment \u2013 Outcome",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s5.addText("See PI1 Gantt for full detail.",{x:.35,y:1,w:W-.7,h:.5,fontSize:14,color:GR5});
+
+      setProgress(28,"Slide 6: Business Context...");
+      var s6=pres.addSlide(); s6.background={color:WH}; hdr(s6,6);
+      s6.addText("Business Context & Vision \u2013 60 min",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s6.addShape(pres.shapes.RECTANGLE,{x:.35,y:.82,w:1.05,h:1.2,fill:{color:PURD},line:{color:PURD}});
+      s6.addText("P2-\nRequirement",{x:.35,y:.82,w:1.05,h:1.2,fontSize:10,color:WH,bold:true,align:"center",valign:"middle"});
+      s6.addShape(pres.shapes.RECTANGLE,{x:1.4,y:.82,w:W-1.75,h:1.2,fill:{color:GR1},line:{color:"DDDDDD"}});
+      s6.addText("The goal of PI2 Planning is to baseline and align the Programme Increment for BT AI Ops by locking the scope, outcomes, delivery cadence, and acceptance criteria required to confidently move into execution.",{x:1.5,y:.88,w:W-1.9,h:1.08,fontSize:11.5,color:GR7,valign:"middle"});
+      var prios=["Enhanced Feature","Automation 1","Automation 2","Data Foundation","Architecture","TBD"];
+      prios.forEach(function(p,pi){
+        var py=2.18+pi*.76,pbg=pi%2===0?GR1:WH;
+        s6.addShape(pres.shapes.RECTANGLE,{x:.35,y:py,w:.45,h:.76,fill:{color:PURD},line:{color:PURD}});
+        s6.addText(String(pi+1),{x:.35,y:py,w:.45,h:.76,fontSize:14,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+        s6.addShape(pres.shapes.RECTANGLE,{x:.8,y:py,w:W-1.15,h:.76,fill:{color:pbg},line:{color:"DDDDDD"}});
+        s6.addText(p,{x:.9,y:py+.12,w:W-1.3,h:.3,fontSize:12,color:BLK,bold:true});
+      });
+
+      setProgress(32,"Slide 7: Tea Break...");
+      inter(pres.addSlide(),"Tea-Break \u2013 10 min",7);
+
+      setProgress(36,"Slide 8: Squad Breakout...");
+      var s8=pres.addSlide(); s8.background={color:PURL}; hdr(s8,8);
+      s8.addText("Squad \u2013 Breakout Session \u2013 2 hrs",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      var rH8=.84,sy8=.88,cW8=(W-.7)/2-.1;
+      DB.squads.forEach(function(s,si){
+        var y8=sy8+si*(rH8+.07),sqc=s.color.replace("#","");
+        s8.addShape(pres.shapes.RECTANGLE,{x:.35,y:y8,w:.12,h:rH8,fill:{color:sqc},line:{color:sqc}});
+        s8.addShape(pres.shapes.RECTANGLE,{x:.47,y:y8,w:cW8-.12,h:rH8,fill:{color:"F5F0FF"},line:{color:"E0D5EE",pt:.4}});
+        s8.addText(s.name,{x:.47,y:y8,w:cW8-.12,h:rH8,fontSize:14,color:BLK,bold:true,align:"center",valign:"middle"});
+        s8.addShape(pres.shapes.RECTANGLE,{x:cW8+.55,y:y8,w:.12,h:rH8,fill:{color:sqc},line:{color:sqc}});
+        s8.addShape(pres.shapes.RECTANGLE,{x:cW8+.67,y:y8,w:cW8-.12,h:rH8,fill:{color:"F5F0FF"},line:{color:"E0D5EE",pt:.4}});
+        s8.addText("PI2 Planning Board \u2013 Link to be confirmed",{x:cW8+.67,y:y8,w:cW8-.12,h:rH8,fontSize:11,color:PURM,align:"center",valign:"middle"});
+      });
+      s8.addText("Modernised Managed Services",{x:W-4,y:H-.5,w:3.7,h:.35,fontSize:14,color:BLK,bold:true,align:"right"});
+
+      setProgress(40,"Slide 9: Lunch...");
+      inter(pres.addSlide(),"Lunch Break \u2013 30 min",9);
+
+      setProgress(44,"Slide 10: Squads Confirm...");
+      var s10=pres.addSlide(); s10.background={color:WH}; hdr(s10,10);
+      s10.addText("Squads Confirm \u2013 60 min",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s10.addText("Squads come with a rough plan against the requirement.",{x:.35,y:.68,w:W-.7,h:.28,fontSize:11,color:GR5});
+      var cfgs=[{x:.3,y:1.1,w:3.85},{x:4.72,y:1.1,w:3.85},{x:9.14,y:1.1,w:3.85},{x:1.5,y:4.35,w:4.6},{x:6.7,y:4.35,w:4.6}];
+      var cH=2.9;
+      DB.squads.forEach(function(s,ci){
+        var cfg=cfgs[ci]; if(!cfg) return;
+        var sqc=s.color.replace("#","");
+        s10.addShape(pres.shapes.OVAL,{x:cfg.x+cfg.w/2-.26,y:cfg.y-.35,w:.52,h:.52,fill:{color:sqc},line:{color:sqc}});
+        s10.addText(String(ci+1),{x:cfg.x+cfg.w/2-.26,y:cfg.y-.35,w:.52,h:.52,fontSize:14,color:WH,bold:true,align:"center",valign:"middle",margin:0});
+        s10.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cfg.x,y:cfg.y,w:cfg.w,h:cH,fill:{color:WH},line:{color:"CCCCCC",pt:.8},rectRadius:.12});
+        s10.addText(s.name,{x:cfg.x,y:cfg.y+.1,w:cfg.w,h:.38,fontSize:13,color:BLK,bold:true,align:"center"});
+        s10.addShape(pres.shapes.LINE,{x:cfg.x+.15,y:cfg.y+.58,w:cfg.w-.3,h:0,line:{color:"AAAAAA",pt:.5,dashType:"dash"}});
+        s10.addText("Requirement",{x:cfg.x+.1,y:cfg.y+.65,w:.9,h:.3,fontSize:9,color:BLK,bold:true});
+        s10.addShape(pres.shapes.RECTANGLE,{x:cfg.x+.1,y:cfg.y+.7,w:cfg.w-.2,h:.62,fill:{color:GR1},line:{color:"DDDDDD"}});
+        s10.addText("Given by Business",{x:cfg.x+.1,y:cfg.y+.7,w:cfg.w-.2,h:.62,fontSize:9.5,color:GR5,align:"center",valign:"middle"});
+        s10.addShape(pres.shapes.LINE,{x:cfg.x+.15,y:cfg.y+1.42,w:cfg.w-.3,h:0,line:{color:"AAAAAA",pt:.5,dashType:"dash"}});
+        s10.addText("Outcome",{x:cfg.x+.1,y:cfg.y+1.5,w:.9,h:.3,fontSize:9,color:BLK,bold:true});
+        s10.addShape(pres.shapes.RECTANGLE,{x:cfg.x+.1,y:cfg.y+1.52,w:cfg.w-.2,h:1.2,fill:{color:GR1},line:{color:"DDDDDD"}});
+        s10.addText("Decided by Squad",{x:cfg.x+.1,y:cfg.y+1.52,w:cfg.w-.2,h:1.2,fontSize:9.5,color:GR5,align:"center",valign:"middle"});
+      });
+
+      setProgress(50,"Slides 11-12: Entry Criteria...");
+      var s11=pres.addSlide(); s11.background={color:WH}; hdr(s11,11);
+      s11.addText("Entry Criteria for PI 2 Planning",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s11.addText("PI2 Planning should start only once, design is complete, data foundations are stable, backlog is refined and dependencies are under control / started to action.",{x:.35,y:.72,w:W-.7,h:.35,fontSize:10.5,color:GR7});
+      s11.addShape(pres.shapes.RECTANGLE,{x:.35,y:1.3,w:3.9,h:.65,fill:{color:"D4E609"},line:{color:"C0D000",pt:.8}});
+      s11.addText("Design",{x:.35,y:1.3,w:3.9,h:.65,fontSize:16,color:BLK,bold:true,align:"center",valign:"middle"});
+      s11.addShape(pres.shapes.RECTANGLE,{x:4.65,y:1.3,w:3.9,h:.65,fill:{color:"C6EFCE"},line:{color:"70AD47",pt:.8}});
+      s11.addText("Data Foundation",{x:4.65,y:1.3,w:3.9,h:.65,fontSize:16,color:BLK,bold:true,align:"center",valign:"middle"});
+      s11.addShape(pres.shapes.RECTANGLE,{x:.35,y:2.1,w:3.9,h:3.2,fill:{color:GR1},line:{color:"CCCCCC"}});
+      s11.addShape(pres.shapes.RECTANGLE,{x:4.65,y:2.1,w:3.9,h:3.2,fill:{color:GR1},line:{color:"CCCCCC"}});
+      s11.addShape(pres.shapes.RECTANGLE,{x:8.95,y:1.3,w:4.05,h:.65,fill:{color:PURD},line:{color:PURD}});
+      s11.addText("Dependencies \u2013 Acc_AIOPS \u2013 Agile Planning for Development",{x:8.95,y:1.3,w:4.05,h:.65,fontSize:9.5,color:WH,bold:true,align:"center",valign:"middle"});
+      var dT=[["AIOPS2 \u2013 Enhanced Features","0","2","2","0","4"],["AIOPS3 \u2013 Automation 1","1","0","1","0","2"],["AIOPS4 \u2013 Automation 2","0","1","1","4","6"],["AIOPS5 \u2013 Data & Integration","0","3","0","0","3"],["AIOPS6 \u2013 Architecture","0","4","3","0","7"],["Total","1","10","7","4","22"]];
+      var dC=[1.6,.45,.45,.38,.45,.42],dH=["Team","Resolved","Backlog","New","Owned","Total"];
+      var dcx=8.95,dhy=1.95;
+      dH.forEach(function(h,i){s11.addShape(pres.shapes.RECTANGLE,{x:dcx,y:dhy,w:dC[i],h:.28,fill:{color:PURD},line:{color:PURD}});s11.addText(h,{x:dcx,y:dhy,w:dC[i],h:.28,fontSize:7,color:WH,bold:true,align:"center",valign:"middle",margin:0});dcx+=dC[i];});
+      dT.forEach(function(row,ri){
+        var ry=dhy+.28+ri*.34,rbg=ri===dT.length-1?PURL:(ri%2===0?WH:GR1); dcx=8.95;
+        row.forEach(function(cell,ci){
+          s11.addShape(pres.shapes.RECTANGLE,{x:dcx,y:ry,w:dC[ci],h:.34,fill:{color:rbg},line:{color:"DDDDDD",pt:.2}});
+          s11.addText(cell,{x:dcx,y:ry,w:dC[ci],h:.34,fontSize:7,color:ri===dT.length-1?PURD:(ci>0?"0070C0":GR7),bold:ri===dT.length-1,align:ci===0?"left":"center",valign:"middle",margin:[0,0,0,ci===0?3:0]});
+          dcx+=dC[ci];
         });
       });
-      setProgress(88,"Confidence vote...");
-      var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
+
+      var s12=pres.addSlide(); s12.background={color:WH}; hdr(s12,12);
+      s12.addText("Entry Criteria for PI 2 Planning",{x:.35,y:.1,w:W-.7,h:.62,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+      s12.addText("Once this is clear, we move to next.",{x:.35,y:.72,w:W-.7,h:.25,fontSize:10.5,color:GR7});
+      var steps=[
+        {n:"[1] BUSINESS MILESTONES DEFINITION",d:"",o:"OUTPUT: Key Milestones (Release dates, Compliance targets, Major deliveries)",h:.6},
+        {n:"[2] FEATURE IDENTIFICATION & PRIORITIZATION",d:"(Map features to milestones + Business Value scoring)",o:"OUTPUT: Prioritized Feature List",h:.62},
+        {n:"[3] RISK & DEPENDENCY IDENTIFICATION",d:"\u2192 Risk (Uncertainty / blockers)  \u2192  Dependency (Team/System reliance)\n\u2193 Is risk high or dependency unresolved?\n\u2192 Yes \u2192 Escalate / ROAM     \u2192 No \u2192 Proceed",o:"OUTPUT: Dependency Map + Risk update in JIRA",h:1.05},
+        {n:"[4] STORY BREAKDOWN (TEAM LEVEL)\n  1 SP = 1 Day approx.",d:"\u2192 Story is INVEST compliant\n\u2192 Estimated (Story Points / Capacity aligned)\n\u2193 Is story actionable?\n\u2192 No \u2192 Refine     \u2192 Yes \u2192 Proceed",o:"OUTPUT: Sprint-ready stories in Sp7-Sp12 on JIRA.",h:1.12},
+        {n:"[5] ACCEPTANCE CRITERIA DEFINITION",d:"(Clear, testable, business-aligned conditions)",o:"OUTPUT: Definition of Ready-Done stories",h:.62}
+      ];
+      var scy=1.06;
+      steps.forEach(function(st){
+        s12.addShape(pres.shapes.RECTANGLE,{x:.35,y:scy,w:3.55,h:st.h,fill:{color:PURL},line:{color:PURL}});
+        s12.addText(st.n,{x:.38,y:scy+.04,w:3.5,h:st.h-.08,fontSize:9,color:GR7,valign:"top"});
+        if(st.d) s12.addText(st.d,{x:3.98,y:scy,w:4.5,h:st.h,fontSize:9,color:GOLD,valign:"middle"});
+        s12.addShape(pres.shapes.RECTANGLE,{x:8.58,y:scy,w:4.4,h:st.h,fill:{color:PURL},line:{color:PURL}});
+        s12.addText(st.o,{x:8.62,y:scy+.04,w:4.3,h:st.h-.08,fontSize:9,color:GR7,valign:"top"});
+        scy+=st.h+.1;
+      });
+
+      setProgress(58,"Slide 13: Day 1 Ends...");
+      inter(pres.addSlide(),"Day 1 Ends",13);
+
+      setProgress(62,"Slide 14: RAID Log...");
+      var s14=pres.addSlide(); s14.background={color:WH}; hdr(s14,14);
+      s14.addText("RAID Log",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
+      var rCols=[{l:"R/A/I/D\nType",w:1.0},{l:"Title",w:1.8},{l:"Description",w:4.0},{l:"Owner",w:1.3},{l:"Accepted/\nMitigated",w:1.2},{l:"Due Date",w:1.0},{l:"Comment",w:2.7}];
+      var rcx=.35,rhy=.82,rrh=.62;
+      rCols.forEach(function(c){s14.addShape(pres.shapes.RECTANGLE,{x:rcx,y:rhy,w:c.w,h:.45,fill:{color:PURD},line:{color:PURD}});s14.addText(c.l,{x:rcx,y:rhy,w:c.w,h:.45,fontSize:9,color:WH,bold:true,align:"center",valign:"middle",margin:0});rcx+=c.w;});
+      var allRaid=[];
+      DB.squads.forEach(function(s){
+        grFor(s.id).forEach(function(g){
+          itFor(g.id).forEach(function(it){
+            if(it.color==="pink"||it.color==="yellow") allRaid.push([it.color==="pink"?"Risk":"Dependency",g.label,it.text,"TBC",it.color==="pink"?"Pending":"Active","TBC",""]);
+          });
+        });
+      });
+      allRaid.slice(0,8).forEach(function(row,ri){
+        var ry=rhy+.45+ri*rrh,rbg=ri%2===0?WH:PURL; rcx=.35;
+        row.forEach(function(cell,ci){
+          s14.addShape(pres.shapes.RECTANGLE,{x:rcx,y:ry,w:rCols[ci].w,h:rrh,fill:{color:rbg},line:{color:"DDDDDD",pt:.3}});
+          s14.addText(cell,{x:rcx+.04,y:ry+.04,w:rCols[ci].w-.08,h:rrh-.08,fontSize:ci===2?7.5:8.5,fontFace:"Calibri",color:GR7,valign:"top"});
+          rcx+=rCols[ci].w;
+        });
+      });
+
+      setProgress(68,"Slides 15-16: Deliverables...");
+      function delivSlide(sld,groups,n){
+        sld.background={color:WH}; hdr(sld,n);
+        sld.addText("PI 2 Expected Deliverables",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
+        var dCols=[{l:"PI 2\nWorkstream",w:1.4},{l:"Use Case Delivered",w:2.2},{l:"Features",w:3.4},{l:"Deliverables",w:W-1.4-2.2-3.4-.7}];
+        var dehY=.78,dehH=.38,dex=.35,dey=dehY+dehH;
+        dCols.forEach(function(c){sld.addShape(pres.shapes.RECTANGLE,{x:dex,y:dehY,w:c.w,h:dehH,fill:{color:PURD},line:{color:PURD}});sld.addText(c.l,{x:dex,y:dehY,w:c.w,h:dehH,fontSize:9.5,color:WH,bold:true,align:"center",valign:"middle",margin:0});dex+=c.w;});
+        var delText="Use Case requirements document\nSolution steer document\nE2E HLD document\nLow Level Design\nTechnical build document\nTest strategy\nTest exit report\nRun books and code\nWarranty Plan\nOperational Readiness Checklist\nWarranty Closure Report";
+        var cy=dey;
+        groups.forEach(function(g){
+          var gh=g.h;
+          sld.addShape(pres.shapes.RECTANGLE,{x:.35,y:cy,w:dCols[0].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+          sld.addText(g.ws,{x:.35,y:cy,w:dCols[0].w,h:gh,fontSize:9,color:GR7,align:"center",valign:"middle"});
+          sld.addShape(pres.shapes.RECTANGLE,{x:.35+dCols[0].w,y:cy,w:dCols[1].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+          sld.addText(g.ucs,{x:.35+dCols[0].w+.05,y:cy+.05,w:dCols[1].w-.1,h:gh-.1,fontSize:8.5,color:GR7,valign:"top"});
+          sld.addShape(pres.shapes.RECTANGLE,{x:.35+dCols[0].w+dCols[1].w,y:cy,w:dCols[2].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+          sld.addText(g.feats,{x:.35+dCols[0].w+dCols[1].w+.05,y:cy+.05,w:dCols[2].w-.1,h:gh-.1,fontSize:8.5,color:GR7,valign:"top"});
+          var delX=.35+dCols[0].w+dCols[1].w+dCols[2].w;
+          sld.addShape(pres.shapes.RECTANGLE,{x:delX,y:cy,w:dCols[3].w,h:gh,fill:{color:GR1},line:{color:"DDDDDD"}});
+          sld.addText(delText,{x:delX+.05,y:cy+.05,w:dCols[3].w-.1,h:gh-.1,fontSize:7.5,color:GR7,valign:"top"});
+          sld.addShape(pres.shapes.LINE,{x:.35,y:cy+gh,w:W-.7,h:0,line:{color:"BBBBBB",pt:.5}});
+          cy+=gh;
+        });
+      }
+      delivSlide(pres.addSlide(),[
+        {ws:"Enhanced\nFeatures",ucs:"UC020 Ticket Summarisation\nUC021 Resolver Auto-Task\nUC024 Auto-closure\nUC026 Email Mgmt\nUC018 KX Troubleshoot",feats:"Feature 1\nFeature 2\nFeature 3\nFeature 4\nFeature 5",h:2.8},
+        {ws:"Automation 1",ucs:"UC016 Auto-Test Diagnostics\nUC030 Repeatable Automations",feats:"Feature 1\nFeature 2",h:1.1},
+        {ws:"Automation 2",ucs:"UC021 Resolver Task\nUC024 Auto-closure\nUC029 PWR Automation",feats:"Feature 1\nFeature 2\nFeature 3",h:1.5}
+      ],15);
+      delivSlide(pres.addSlide(),[
+        {ws:"Data\nFoundations",ucs:"F1 Data Model & CMDB\nF2 Event Correlation\nF3 CI Binding\nF4 PSR Maps\nF5 Integration",feats:"F1\nF2\nF3\nF4\nF5",h:2.4},
+        {ws:"Architecture",ucs:"KDD1 Inventory Reconciliation\nKDD2 Metrics & Anomaly\nKDD3 Event Ingestion\nKDD4 Data Transformation\nKDD5 Filtering\nKDD6 SD WAN",feats:"KDD1\nKDD2\nKDD3\nKDD4\nKDD5\nKDD6",h:2.8}
+      ],16);
+
+      setProgress(76,"Slide 17: Confidence Voting...");
+      var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,17);
       cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
-      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence",w:W-2.55-3.8-.7}];
-      var cvcx=.35,cvhy=1.05,cvrh=.85;
-      cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:c.w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(c.l,{x:cvcx,y:cvhy,w:c.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=c.w;});
+      cv.addText("Agile Team Members \u2013 Devs, QA, Analyst, Architect, PO, PM, RTE",{x:.35,y:.72,w:W-.7,h:.28,fontSize:11,color:GR5});
+      var cvC=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
+      var cvcx=.35,cvhy=1.05,cvrh=.92;
+      cvC.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:c.w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(c.l,{x:cvcx,y:cvhy,w:c.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=c.w;});
       DB.squads.forEach(function(s,qi){
         var cvy=cvhy+.48+qi*cvrh,cvbg=qi%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
-        cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:c.w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=c.w;});
-        cv.addText(s.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:"000000",bold:true,valign:"middle"});
-        cv.addText(s.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:s.color.replace("#",""),bold:true,align:"center"});
+        cvC.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:c.w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=c.w;});
+        cv.addText(s.name.toUpperCase(),{x:.43,y:cvy,w:cvC[0].w-.16,h:cvrh,fontSize:11,color:BLK,bold:true,valign:"middle"});
+        cv.addText(s.confidence+"/5",{x:.35+cvC[0].w+cvC[1].w+.2,y:cvy+cvrh/2-.2,w:cvC[2].w-.4,h:.4,fontSize:18,color:s.color.replace("#",""),bold:true,align:"center"});
       });
-      setProgress(95,"Saving...");
-      var cls=pres.addSlide(); cls.background={color:PURD};
-      cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
-      pres.writeFile({fileName:"PI2_Planning_Workshop.pptx"}).then(function(){
+
+      setProgress(82,"Slides 18-19: ART Summary...");
+      function artSlide(sld,squads,n){
+        sld.background={color:WH}; hdr(sld,n);
+        sld.addText("ART Summary",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:BLK,bold:true});
+        var rowDefs=[{l:"Strong",h:1.35,bg:"404040"},{l:"Medium",h:1.48,bg:"EEEEEE"},{l:"OK",h:1.48,bg:"F5F5F5"},{l:"Risk",h:1.49,bg:"F0F0F0"}];
+        var ry=.82;
+        rowDefs.forEach(function(row){
+          if(row.l==="Strong"){sld.addShape(pres.shapes.RECTANGLE,{x:.18,y:ry,w:1.3,h:row.h,fill:{color:row.bg},line:{color:row.bg}});sld.addText(row.l,{x:.18,y:ry,w:1.3,h:row.h,fontSize:12,color:WH,bold:true,align:"center",valign:"middle"});}
+          else sld.addText(row.l,{x:.18,y:ry,w:1.3,h:row.h,fontSize:11,color:"404040",align:"left",valign:"middle"});
+          ry+=row.h;
+        });
+        var cardW=(W-1.6-.35-.35-squads.length*.08)/squads.length,cardH=5.8,startX=1.6;
+        squads.forEach(function(s,sci){
+          var cx=startX+sci*(cardW+.08),sqc=s.color.replace("#","");
+          sld.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx,y:.82,w:cardW,h:cardH,fill:{color:WH},line:{color:sci===squads.length-1?PUR:"BBBBBB",pt:sci===squads.length-1?1.5:.8},rectRadius:.14});
+          sld.addText(s.name.toUpperCase(),{x:cx,y:.92,w:cardW,h:.35,fontSize:9.5,color:"999999",align:"center"});
+          var ry2=.82+.55;
+          var artRows=["Plan baselined for PI2","Use cases scoped","Designs in progress","Dependencies identified"];
+          rowDefs.forEach(function(row,ri){
+            if(ri>0) sld.addShape(pres.shapes.RECTANGLE,{x:cx,y:ry2,w:cardW,h:row.h,fill:{color:"F3F4F6"},line:{color:"EEEEEE",pt:.2}});
+            sld.addText(artRows[ri],{x:cx+.08,y:ry2,w:cardW-.16,h:row.h,fontSize:9,color:ri===0?"888888":"111827",italic:ri===0,valign:"middle",align:"center"});
+            ry2+=row.h;
+          });
+        });
+      }
+      artSlide(pres.addSlide(),DB.squads.slice(0,3),18);
+      artSlide(pres.addSlide(),DB.squads.slice(3,5),19);
+
+      setProgress(92,"Slide 20: Day 2 Ends...");
+      inter(pres.addSlide(),"Day 2 Ends \u2013 Thanks",20);
+
+      setProgress(97,"Saving file...");
+      pres.writeFile({fileName:"PI2_Planning_Workshop_July2026.pptx"}).then(function(){
         setProgress(100,"Done!");
         setTimeout(function(){
           document.getElementById("progressOverlay").classList.remove("show");
           btn.disabled=false;
-          showToast("PowerPoint downloaded!");
+          showToast("PowerPoint downloaded! 20 slides, both days.");
         },500);
       });
-    } catch(e){
+    }catch(e){
       document.getElementById("progressOverlay").classList.remove("show");
       btn.disabled=false;
       showToast("Export failed: "+e.message,true);
@@ -673,7 +908,6 @@ function exportPPTX(){
   },100);
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
 loadAll();
 </script>
 </body>
