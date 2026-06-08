@@ -88,6 +88,21 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 .progress-fill{background:#7C3AED;height:6px;border-radius:20px;transition:width .3s}
 .view{display:none}
 .view.active{display:block}
+
+.resize-handle{position:absolute;top:0;width:8px;height:100%;cursor:ew-resize;z-index:20;display:none;border-radius:4px}
+.resize-handle.left{left:-4px}
+.resize-handle.right{right:-4px}
+.resize-handle:hover,.phase-box:hover .resize-handle{display:block;background:rgba(109,47,190,.2)}
+.person-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.7);margin-right:3px}
+.free-sticky{position:absolute;border-radius:4px;padding:6px 8px 4px;font-size:9.5px;line-height:1.3;font-weight:500;cursor:grab;user-select:none;box-shadow:2px 3px 8px rgba(0,0,0,.18);min-width:70px;max-width:140px;z-index:10;word-break:break-word}
+.free-sticky:active{cursor:grabbing}
+.free-sticky.yellow{background:#FFE566;color:#1F1F1F}
+.free-sticky.pink{background:#FF8FAB;color:#1F1F1F}
+.free-sticky.purple{background:#C084FC;color:#1F1F1F}
+.free-sticky.green{background:#86EFAC;color:#1F1F1F}
+.uc-canvas-wrap{position:relative;overflow:visible}
+.add-free-btn{position:absolute;bottom:6px;right:6px;background:#FCD34D;color:#4C1D95;border:none;border-radius:5px;padding:3px 9px;cursor:pointer;font-size:9px;font-weight:700;z-index:20;opacity:0;transition:opacity .15s;pointer-events:auto}
+.uc-canvas-wrap:hover .add-free-btn{opacity:1}
 </style>
 </head>
 <body>
@@ -135,7 +150,7 @@ function dbDelete(table,col,val){
   return fetch(SUPA_URL+"/rest/v1/"+table+"?"+col+"=eq."+val,{method:"DELETE",headers:HDRS});
 }
 
-var DB={squads:[],useCases:[],phases:[],stickies:[],floatingDeps:[],depGroups:[],depItems:[],teamMembers:[],userStories:[]};
+var DB={squads:[],useCases:[],phases:[],stickies:[],floatingDeps:[],depGroups:[],depItems:[],teamMembers:[],userStories:[],freeStickies:[]};
 var currentSquad=0,currentView="board",editMode=false;
 var SPRINTS=[{name:"Sprint 1",weeks:["wk1","wk2"]},{name:"Sprint 2",weeks:["wk3","wk4"]},{name:"Sprint 3",weeks:["wk5","wk6"]},{name:"Sprint 4",weeks:["wk7","wk8"]},{name:"Sprint 5",weeks:["wk9","wk10"]},{name:"BRP",weeks:["wk11"]},{name:"Sprint 6",weeks:["wk12"]}];
 var ALL_WEEKS=["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
@@ -156,7 +171,7 @@ async function loadAll(){
     var r=await Promise.all([
       dbGet("squads","name"),dbGet("use_cases","sort_order"),dbGet("phases","sort_order"),
       dbGet("stickies","sort_order"),dbGet("floating_deps","sort_order"),dbGet("dep_groups","sort_order"),
-      dbGet("dep_items","sort_order"),dbGet("team_members","sort_order"),dbGet("user_stories","sort_order")
+      dbGet("dep_items","sort_order"),dbGet("team_members","sort_order"),dbGet("user_stories","sort_order"),dbGet("free_stickies","sort_order")
     ]);
     DB.squads=Array.isArray(r[0])?r[0]:[];
     DB.useCases=Array.isArray(r[1])?r[1]:[];
@@ -167,6 +182,7 @@ async function loadAll(){
     DB.depItems=Array.isArray(r[6])?r[6]:[];
     DB.teamMembers=Array.isArray(r[7])?r[7]:[];
     DB.userStories=Array.isArray(r[8])?r[8]:[];
+    DB.freeStickies=Array.isArray(r[9])?r[9]:[];
     if(!DB.squads.length){
       showErr("No data found. Check the SQL ran correctly in Supabase.");return;
     }
@@ -250,7 +266,8 @@ function renderBoard(){
     h+='</div>';
 
     // Canvas with BG columns
-    h+='<div style="position:relative;overflow:visible" id="canvas-'+uc.id+'">';
+    h+='<div class="uc-canvas-wrap" id="canvas-'+uc.id+'">';
+    h+='<button class="add-free-btn" onclick="addFreeSticky(\'' + uc.id + '\')">+ sticky</button>';
     h+='<div style="display:grid;grid-template-columns:'+ALL_WEEKS.map(function(){return WK+"px";}).join(" ")+';position:absolute;inset:0;pointer-events:none">';
     ALL_WEEKS.forEach(function(wk,wi){
       h+='<div style="border-right:1px solid #EEE;background:'+(wk==="wk11"?"#FFFBEB":(wi%2===0?"#FAFAFA":"#fff"))+';height:100%"></div>';
@@ -264,8 +281,11 @@ function renderBoard(){
       var left=si*WK,width=(ei-si+1)*WK-8,top=10+pi*95;
       var sts=stFor(ph.id);
       h+='<div class="phase-box" id="ph-'+ph.id+'" data-ph="'+ph.id+'" data-uc="'+uc.id+'" style="left:'+left+'px;width:'+width+'px;top:'+top+'px">';
+      h+='<div class="resize-handle left" onmousedown="startResize(event,'+ph.id+',\'left\')"></div>';
+      h+='<div class="resize-handle right" onmousedown="startResize(event,'+ph.id+',\'right\')"></div>';
       h+='<div class="phase-box-header">';
-      h+='<span style="font-size:13px">&#128100;</span> ';
+      var ownerInit = ph.owner ? ph.owner.replace(/[^a-zA-Z]/g,'').charAt(0).toUpperCase() : '?';
+      h += '<div class="person-avatar" style="background:' + s.color + '" title="' + ph.owner + '">' + ownerInit + '</div>';
       h+='<span '+(editMode?'contenteditable="true" onblur="savePh('+ph.id+',\'name\',this.innerText)"':'')+' style="flex:1">'+ph.name+'</span> ';
       h+='<span class="phase-owner" '+(editMode?'contenteditable="true" onblur="savePh('+ph.id+',\'owner\',this.innerText)"':'')+'>'+ph.owner+'</span>';
       if(editMode) h+='<button class="btn-del" onclick="delPh('+ph.id+',\''+uc.id+'\')">&#10005;</button>';
@@ -279,6 +299,17 @@ function renderBoard(){
       });
       if(editMode) h+='<button class="btn-add" onclick="addSt('+ph.id+')">+ sticky</button>';
       h+='</div></div>';
+    });
+
+    // Free floating stickies
+    var fsArr = DB.freeStickies ? DB.freeStickies.filter(function(fs){ return fs.use_case_id === uc.id; }) : [];
+    fsArr.forEach(function(fs) {
+      h += '<div class="free-sticky ' + fs.color + '" id="fs-' + fs.id + '" data-fs="' + fs.id + '" style="left:' + (fs.x||20) + 'px;top:' + (fs.y||20) + 'px" onmousedown="startFreeDrag(event,' + fs.id + ')">';
+      h += '<div contenteditable="true" onblur="saveFreeSticky(' + fs.id + ',this.innerText)" style="outline:none;min-width:55px;min-height:18px">' + fs.text + '</div>';
+      h += '<div style="display:flex;justify-content:space-between;margin-top:3px">';
+      h += '<button onclick="cycleFreeColor(' + fs.id + ')" style="background:none;border:none;cursor:pointer;font-size:10px;padding:0" title="Change colour">&#9679;</button>';
+      h += '<button onclick="delFreeSticky(' + fs.id + ')" style="background:none;border:none;cursor:pointer;font-size:10px;color:#EF4444;padding:0">&#10005;</button>';
+      h += '</div></div>';
     });
 
     // Floating deps
@@ -653,6 +684,107 @@ async function delStory(id){
   DB.userStories=DB.userStories.filter(function(x){return x.id!==id});
   renderBoard();
 }
+
+// ── Resize phase boxes ────────────────────────────────────────────────────────
+var resizeState = null;
+function startResize(e, phId, side) {
+  e.stopPropagation(); e.preventDefault();
+  var box = document.getElementById("ph-" + phId);
+  if (!box) return;
+  resizeState = { phId:phId, side:side, box:box, startX:e.clientX, origLeft:parseInt(box.style.left), origWidth:parseInt(box.style.width) };
+  document.addEventListener("mousemove", onResize);
+  document.addEventListener("mouseup", endResize);
+}
+function onResize(e) {
+  if (!resizeState) return;
+  var dx = e.clientX - resizeState.startX;
+  if (resizeState.side === "right") {
+    var nw = Math.max(WK, resizeState.origWidth + dx);
+    resizeState.box.style.width = nw + "px";
+  } else {
+    var nl = resizeState.origLeft + dx;
+    var nw2 = resizeState.origWidth - dx;
+    if (nw2 < WK) return;
+    resizeState.box.style.left = nl + "px";
+    resizeState.box.style.width = nw2 + "px";
+  }
+}
+async function endResize(e) {
+  if (!resizeState) return;
+  var box = resizeState.box;
+  var newLeft = parseInt(box.style.left);
+  var newWidth = parseInt(box.style.width);
+  var si = Math.max(0, Math.min(ALL_WEEKS.length-1, Math.round(newLeft / WK)));
+  var ei = Math.max(si, Math.min(ALL_WEEKS.length-1, Math.round((newLeft + newWidth + 8) / WK) - 1));
+  var newSW = ALL_WEEKS[si], newEW = ALL_WEEKS[ei];
+  var ph = DB.phases.find(function(p){ return p.id === resizeState.phId; });
+  if (ph) { ph.start_week = newSW; ph.end_week = newEW; }
+  await dbPatch("phases", "id", resizeState.phId, { start_week:newSW, end_week:newEW });
+  showToast("Resized: " + newSW + " to " + newEW);
+  document.removeEventListener("mousemove", onResize);
+  document.removeEventListener("mouseup", endResize);
+  resizeState = null;
+  renderBoard();
+}
+
+// ── Free-floating stickies ────────────────────────────────────────────────────
+var freeDragState = null;
+function startFreeDrag(e, fsId) {
+  if (e.target.getAttribute("contenteditable") || e.target.tagName === "BUTTON") return;
+  e.preventDefault();
+  var el = document.getElementById("fs-" + fsId);
+  if (!el) return;
+  freeDragState = { fsId:fsId, el:el, startX:e.clientX, startY:e.clientY, origLeft:parseInt(el.style.left)||0, origTop:parseInt(el.style.top)||0 };
+  el.style.zIndex = 50;
+  document.addEventListener("mousemove", onFreeDrag);
+  document.addEventListener("mouseup", endFreeDrag);
+}
+function onFreeDrag(e) {
+  if (!freeDragState) return;
+  freeDragState.el.style.left = (freeDragState.origLeft + e.clientX - freeDragState.startX) + "px";
+  freeDragState.el.style.top  = (freeDragState.origTop  + e.clientY - freeDragState.startY) + "px";
+}
+async function endFreeDrag(e) {
+  if (!freeDragState) return;
+  var nx = parseInt(freeDragState.el.style.left);
+  var ny = parseInt(freeDragState.el.style.top);
+  freeDragState.el.style.zIndex = 10;
+  var fs = DB.freeStickies ? DB.freeStickies.find(function(f){ return f.id === freeDragState.fsId; }) : null;
+  if (fs) { fs.x = nx; fs.y = ny; }
+  await dbPatch("free_stickies", "id", freeDragState.fsId, { x:nx, y:ny });
+  document.removeEventListener("mousemove", onFreeDrag);
+  document.removeEventListener("mouseup", endFreeDrag);
+  freeDragState = null;
+}
+async function addFreeSticky(ucId) {
+  var t = prompt("Sticky text:"); if (!t) return;
+  if (!DB.freeStickies) DB.freeStickies = [];
+  var d = await dbPost("free_stickies", { use_case_id:ucId, text:t, color:"yellow", x:30, y:30, sort_order:999 });
+  if (Array.isArray(d) && d[0]) DB.freeStickies.push(d[0]);
+  renderBoard(); showToast("Sticky added! Drag it anywhere.");
+}
+async function saveFreeSticky(id, val) {
+  if (!DB.freeStickies) return;
+  var fs = DB.freeStickies.find(function(f){ return f.id === id; });
+  if (fs) fs.text = val.trim();
+  await dbPatch("free_stickies", "id", id, { text:val.trim() });
+}
+async function cycleFreeColor(id) {
+  if (!DB.freeStickies) return;
+  var colors = ["yellow","pink","purple","green"];
+  var fs = DB.freeStickies.find(function(f){ return f.id === id; });
+  if (!fs) return;
+  var next = colors[(colors.indexOf(fs.color)+1) % colors.length];
+  fs.color = next;
+  await dbPatch("free_stickies", "id", id, { color:next });
+  renderBoard();
+}
+async function delFreeSticky(id) {
+  await dbDelete("free_stickies", "id", id);
+  if (DB.freeStickies) DB.freeStickies = DB.freeStickies.filter(function(f){ return f.id !== id; });
+  renderBoard();
+}
+
 function showToast(msg,e){
   var t=document.getElementById("toast"); t.textContent=msg;
   t.className="toast show"+(e?" error":"");
