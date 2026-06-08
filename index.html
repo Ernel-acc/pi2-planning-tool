@@ -4,171 +4,101 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BT AI Ops – PI Planning Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', sans-serif; background: #F0EEF8; min-height: 100vh; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#F0EEF8;min-height:100vh}
+nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200;flex-wrap:wrap;gap:8px}
+.nav-brand{display:flex;align-items:center;gap:10px;padding:10px 0}
+.nav-bar{width:5px;height:26px;background:#FCD34D;border-radius:2px}
+.nav-title{color:#fff;font-weight:800;font-size:14px}
+.nav-sub{color:#DDD6FE;font-size:10px}
+.nav-date{background:rgba(255,255,255,.15);border-radius:6px;padding:3px 9px;color:#FCD34D;font-size:11px;font-weight:700}
+.nav-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0}
+.nav-tab{background:none;border:none;color:#DDD6FE;padding:8px 12px;cursor:pointer;font-size:11px;font-weight:400;border-bottom:2px solid transparent;white-space:nowrap}
+.nav-tab.active{color:#FCD34D;font-weight:700;border-bottom-color:#FCD34D}
+.btn-export{background:#FCD34D;color:#4C1D95;border:none;border-radius:7px;padding:7px 13px;cursor:pointer;font-weight:800;font-size:11px}
+.squad-selector{display:flex;gap:6px;padding:12px 20px;flex-wrap:wrap;background:#E9E5F8;border-bottom:1px solid #D4D0EE;align-items:center}
+.squad-btn{border:none;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;border:1.5px solid transparent}
+.board-container{padding:16px 20px;overflow-x:auto}
+.board{min-width:1400px}
+.squad-header-bar{border-radius:8px 8px 0 0;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.squad-header-bar h2{color:#fff;font-size:18px;font-weight:800}
+.board-top{display:grid;grid-template-columns:200px 1fr 280px 180px;gap:12px;padding:12px;background:#fff;border:1px solid #E5E0F8}
+.panel-box{border-radius:8px;overflow:hidden}
+.panel-title{padding:7px 10px;font-size:11px;font-weight:700;color:#fff;text-align:center}
+.panel-body{padding:8px;background:#F8F6FF;min-height:80px}
+.sticky{border-radius:4px;padding:5px 7px;font-size:9.5px;line-height:1.3;font-weight:500;cursor:pointer;transition:transform .1s,box-shadow .1s;word-break:break-word;box-shadow:1px 2px 4px rgba(0,0,0,.12);display:inline-block}
+.sticky:hover{transform:scale(1.03);box-shadow:2px 4px 8px rgba(0,0,0,.18)}
+.sticky.yellow{background:#FFE566;color:#1F1F1F}
+.sticky.pink{background:#FF8FAB;color:#1F1F1F}
+.sticky.purple{background:#C084FC;color:#1F1F1F}
+.sticky.green{background:#86EFAC;color:#1F1F1F}
+.sticky.white{background:#fff;color:#374151;border:1px solid #E5E7EB}
+.sticky-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+.sprint-grid-wrap{background:#fff;border:1px solid #E5E0F8;border-top:none}
+.sprint-headers{display:grid;border-bottom:1px solid #E5E0F8}
+.sprint-header-cell{background:#6B2FBE;color:#fff;text-align:center;padding:7px 4px;font-size:11px;font-weight:700;border-right:1px solid #8B4FDE}
+.sprint-header-cell.brp{background:#FCD34D;color:#1F2937}
+.week-headers{display:grid;background:#F3F0FF;border-bottom:2px solid #E5E0F8}
+.week-cell{padding:4px 2px;font-size:9px;color:#6B7280;text-align:center;border-right:1px solid #E5E0F8;font-weight:500}
+.uc-row{display:grid;border-bottom:1px solid #EEE;min-height:160px}
+.uc-label{padding:10px;border-right:1px solid #E5E0F8;display:flex;flex-direction:column;gap:4px;background:#FAFAFA}
+.uc-label-badge{border-radius:5px;padding:5px 8px;font-size:10px;font-weight:700;color:#fff;text-align:center;line-height:1.3}
+.uc-label-desc{font-size:9.5px;color:#6B7280;line-height:1.4;margin-top:4px}
+.phase-box{border:1.5px solid #374151;background:#fff;border-radius:4px;padding:5px 8px;position:absolute}
+.phase-box-header{font-size:9px;font-weight:700;color:#1F2937;margin-bottom:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.phase-owner{font-size:8.5px;color:#6B7280;font-weight:400}
+.phase-stickies{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.phase-label-big{border-radius:5px;padding:8px 12px;font-size:11px;font-weight:800;color:#fff;text-align:center;white-space:nowrap}
+.phase-label-big.yellow{background:#F59E0B;color:#1F2937}
+.phase-label-big.purple{background:#7C3AED}
+.phase-label-big.green{background:#10B981}
+.phase-label-big.teal{background:#0891B2}
+.side-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:#fff;border:1px solid #E5E0F8;border-top:none}
+.deps-panel{background:#F8F6FF;border-radius:8px;overflow:hidden}
+.deps-panel-title{background:#6B2FBE;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;text-align:center}
+.deps-panel-body{padding:10px}
+.deps-group{margin-bottom:10px}
+.deps-group-label{font-size:10px;font-weight:700;color:#4C1D95;margin-bottom:5px}
+.deps-sticky-row{display:flex;flex-wrap:wrap;gap:5px}
+.stories-panel{background:#F8F6FF;border-radius:8px;overflow:hidden}
+.stories-panel-title{background:#6B2FBE;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;text-align:center}
+.stories-panel-body{padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.story-empty{background:#FFE566;border-radius:4px;height:50px;opacity:.5}
 
-/* ── NAV ── */
-nav {
-  background: #4C1D95;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; position: sticky; top: 0; z-index: 200;
-  flex-wrap: wrap; gap: 8px;
-}
-.nav-brand { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
-.nav-bar { width: 5px; height: 26px; background: #FCD34D; border-radius: 2px; }
-.nav-title { color: #fff; font-weight: 800; font-size: 14px; }
-.nav-sub { color: #DDD6FE; font-size: 10px; }
-.nav-date { background: rgba(255,255,255,.15); border-radius: 6px; padding: 3px 9px; color: #FCD34D; font-size: 11px; font-weight: 700; }
-.nav-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 0; }
-.nav-tab { background: none; border: none; color: #DDD6FE; padding: 8px 12px; cursor: pointer; font-size: 11px; font-weight: 400; border-bottom: 2px solid transparent; white-space: nowrap; }
-.nav-tab.active { color: #FCD34D; font-weight: 700; border-bottom-color: #FCD34D; }
-.btn-export { background: #FCD34D; color: #4C1D95; border: none; border-radius: 7px; padding: 7px 13px; cursor: pointer; font-weight: 800; font-size: 11px; }
-.btn-export:hover { opacity: .88; }
+/* Edit mode */
+.edit-banner{background:#FEF3C7;border:1px solid #FCD34D;padding:6px 12px;font-size:11px;color:#92400E;font-weight:600;text-align:center;display:none}
+.edit-banner.show{display:block}
+.editable-sticky{cursor:text;border:2px dashed #7C3AED !important;min-width:80px;min-height:30px}
+.add-sticky-btn{background:#FFF9C4;border:1.5px dashed #F59E0B;border-radius:4px;padding:4px 8px;font-size:9px;color:#92400E;cursor:pointer;font-weight:600}
+.add-sticky-btn:hover{background:#FEF3C7}
+.btn-del-sticky{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#EF4444;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700;z-index:10}
+.sticky-wrap{position:relative;display:inline-block}
+.sticky-wrap:hover .btn-del-sticky{display:flex}
 
-/* ── SQUAD SELECTOR ── */
-.squad-selector { display: flex; gap: 6px; padding: 12px 20px; flex-wrap: wrap; background: #E9E5F8; border-bottom: 1px solid #D4D0EE; }
-.squad-btn {
-  border: none; border-radius: 20px; padding: 5px 14px;
-  cursor: pointer; font-size: 11px; font-weight: 700;
-  transition: all .15s; border: 1.5px solid transparent;
-}
+.toast{background:#D1FAE5;border:1px solid #6EE7B7;padding:8px 16px;font-size:11px;color:#065F46;font-weight:600;display:none;position:fixed;top:60px;right:20px;z-index:300;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{display:block}
+.toast.error{background:#FEE2E2;border-color:#FCA5A5;color:#991B1B}
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;font-size:14px;color:#6B7280}
+.spinner{width:24px;height:24px;border:3px solid #EDE9FE;border-top-color:#7C3AED;border-radius:50%;animation:spin .8s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+.progress-overlay.show{display:flex}
+.progress-box{background:#fff;border-radius:12px;padding:28px 36px;text-align:center;min-width:260px}
+.progress-title{font-weight:700;font-size:15px;color:#4C1D95;margin-bottom:8px}
+.progress-sub{font-size:12px;color:#6B7280;margin-bottom:16px}
+.progress-track{background:#F3F4F6;border-radius:20px;height:6px;overflow:hidden}
+.progress-fill{background:#7C3AED;height:6px;border-radius:20px;transition:width .3s}
+.view{display:none}
+.view.active{display:block}
 
-/* ── MAIN BOARD ── */
-.board-container { padding: 16px 20px; overflow-x: auto; }
-.board { min-width: 1400px; }
-
-/* Squad header bar */
-.squad-header-bar {
-  border-radius: 8px 8px 0 0; padding: 10px 18px;
-  display: flex; align-items: center; gap: 12px; margin-bottom: 0;
-}
-.squad-header-bar h2 { color: #fff; font-size: 18px; font-weight: 800; }
-
-/* Board top section - Team Capacity + Overview + Deps + User Stories */
-.board-top { display: grid; grid-template-columns: 200px 1fr 280px 180px; gap: 12px; padding: 12px; background: #fff; border: 1px solid #E5E0F8; margin-bottom: 0; }
-
-.panel-box { border-radius: 8px; overflow: hidden; }
-.panel-title { padding: 7px 10px; font-size: 11px; font-weight: 700; color: #fff; text-align: center; }
-.panel-body { padding: 8px; background: #F8F6FF; min-height: 80px; }
-
-/* Sticky note */
-.sticky {
-  border-radius: 4px; padding: 5px 7px; font-size: 9.5px;
-  line-height: 1.3; font-weight: 500; cursor: pointer;
-  transition: transform .1s, box-shadow .1s;
-  word-break: break-word; position: relative;
-  box-shadow: 1px 2px 4px rgba(0,0,0,.12);
-}
-.sticky:hover { transform: scale(1.03); box-shadow: 2px 4px 8px rgba(0,0,0,.18); }
-.sticky.yellow { background: #FFE566; color: #1F1F1F; }
-.sticky.pink { background: #FF8FAB; color: #1F1F1F; }
-.sticky.purple { background: #C084FC; color: #1F1F1F; }
-.sticky.green { background: #86EFAC; color: #1F1F1F; }
-.sticky.white { background: #fff; color: #374151; border: 1px solid #E5E7EB; }
-
-.sticky-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
-.sticky-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-
-/* ── SPRINT GRID ── */
-.sprint-grid-wrap { background: #fff; border: 1px solid #E5E0F8; border-top: none; }
-
-.sprint-headers { display: grid; border-bottom: 1px solid #E5E0F8; }
-.sprint-header-cell {
-  background: #6B2FBE; color: #fff; text-align: center;
-  padding: 7px 4px; font-size: 11px; font-weight: 700;
-  border-right: 1px solid #8B4FDE;
-}
-.sprint-header-cell.brp { background: #FCD34D; color: #1F2937; }
-.week-headers { display: grid; background: #F3F0FF; border-bottom: 2px solid #E5E0F8; }
-.week-cell { padding: 4px 2px; font-size: 9px; color: #6B7280; text-align: center; border-right: 1px solid #E5E0F8; font-weight: 500; }
-
-/* ── USE CASE ROW ── */
-.uc-row { display: grid; border-bottom: 1px solid #EEE; min-height: 160px; }
-.uc-label {
-  padding: 10px 10px; border-right: 1px solid #E5E0F8;
-  display: flex; flex-direction: column; gap: 4px;
-  background: #FAFAFA;
-}
-.uc-label-badge {
-  border-radius: 5px; padding: 5px 8px;
-  font-size: 10px; font-weight: 700; color: #fff;
-  text-align: center; line-height: 1.3;
-}
-.uc-label-desc { font-size: 9.5px; color: #6B7280; line-height: 1.4; margin-top: 4px; }
-
-.uc-canvas { position: relative; padding: 10px 8px; display: flex; flex-direction: column; gap: 8px; overflow: visible; }
-
-/* Phase box */
-.phase-box {
-  border: 1.5px solid #374151; background: #fff; border-radius: 4px;
-  padding: 5px 8px; position: relative;
-}
-.phase-box-header {
-  font-size: 9.5px; font-weight: 700; color: #1F2937; margin-bottom: 6px;
-  display: flex; align-items: center; gap: 6px;
-}
-.phase-owner { font-size: 9px; color: #6B7280; font-weight: 400; }
-.person-icon { font-size: 14px; }
-.phase-stickies { display: flex; flex-wrap: wrap; gap: 4px; }
-
-.phase-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
-
-/* Big phase label (Solution Build, UAT etc) */
-.phase-label-big {
-  border-radius: 5px; padding: 10px 14px;
-  font-size: 12px; font-weight: 800; color: #fff;
-  text-align: center; white-space: nowrap; align-self: center;
-}
-.phase-label-big.yellow { background: #F59E0B; color: #1F2937; }
-.phase-label-big.purple { background: #7C3AED; }
-.phase-label-big.green { background: #10B981; }
-.phase-label-big.teal { background: #0891B2; }
-
-/* Dependencies floating stickies */
-.dep-floating { display: flex; flex-direction: column; gap: 5px; padding: 8px 0 8px 8px; border-left: 2px dashed #E5E0F8; }
-
-/* ── SIDE PANELS ── */
-.side-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; background: #fff; border: 1px solid #E5E0F8; border-top: none; }
-.deps-panel { background: #F8F6FF; border-radius: 8px; overflow: hidden; }
-.deps-panel-title { background: #6B2FBE; color: #fff; padding: 8px 12px; font-size: 12px; font-weight: 700; text-align: center; }
-.deps-panel-body { padding: 10px; }
-.deps-group { margin-bottom: 10px; }
-.deps-group-label { font-size: 10px; font-weight: 700; color: #4C1D95; margin-bottom: 5px; }
-.deps-sticky-row { display: flex; flex-wrap: wrap; gap: 5px; }
-
-.stories-panel { background: #F8F6FF; border-radius: 8px; overflow: hidden; }
-.stories-panel-title { background: #6B2FBE; color: #fff; padding: 8px 12px; font-size: 12px; font-weight: 700; text-align: center; }
-.stories-panel-body { padding: 10px; display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
-.story-empty { background: #FFE566; border-radius: 4px; height: 50px; opacity: .5; }
-
-/* ── EDIT MODE ── */
-.edit-mode-banner { background: #FEF3C7; border: 1px solid #FCD34D; padding: 6px 12px; font-size: 11px; color: #92400E; font-weight: 600; text-align: center; display: none; }
-.edit-mode-banner.show { display: block; }
-.editable:focus { outline: 2px solid #7C3AED; border-radius: 2px; }
-
-/* ── TOAST ── */
-.toast { background: #D1FAE5; border: 1px solid #6EE7B7; padding: 8px 16px; font-size: 11px; color: #065F46; font-weight: 600; display: none; position: fixed; top: 60px; right: 20px; z-index: 300; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
-.toast.show { display: block; }
-.toast.error { background: #FEE2E2; border-color: #FCA5A5; color: #991B1B; }
-
-/* ── PROGRESS ── */
-.progress-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; align-items: center; justify-content: center; }
-.progress-overlay.show { display: flex; }
-.progress-box { background: #fff; border-radius: 12px; padding: 28px 36px; text-align: center; min-width: 260px; }
-.progress-title { font-weight: 700; font-size: 15px; color: #4C1D95; margin-bottom: 8px; }
-.progress-sub { font-size: 12px; color: #6B7280; margin-bottom: 16px; }
-.progress-track { background: #F3F4F6; border-radius: 20px; height: 6px; overflow: hidden; }
-.progress-fill { background: #7C3AED; height: 6px; border-radius: 20px; transition: width .3s; }
-
-/* Views */
-.view { display: none; }
-.view.active { display: block; }
+/* Inline edit input */
+.inline-edit{background:rgba(255,255,0,.3);border:none;border-bottom:1px solid #7C3AED;font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;width:100%;outline:none;padding:1px 2px}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
 <nav>
   <div class="nav-brand">
     <div class="nav-bar"></div>
@@ -176,41 +106,21 @@ nav {
       <div class="nav-sub">BT AI Ops</div>
       <div class="nav-title">PI Planning Tool</div>
     </div>
-    <div class="nav-date" id="navDate">PI2 &mdash; July 2026</div>
+    <div class="nav-date">PI2 &mdash; July 2026</div>
   </div>
   <div class="nav-right">
     <button class="nav-tab active" onclick="switchView('board',this)">Planning Board</button>
     <button class="nav-tab" onclick="switchView('program',this)">Program Board</button>
     <button class="nav-tab" onclick="switchView('deps',this)">Dependencies</button>
-    <button class="btn-export" onclick="exportPPTX()" id="exportBtn">&#8595; Export to PowerPoint</button>
+    <button class="btn-export" onclick="exportPPTX()">&#8595; Export to PowerPoint</button>
   </div>
 </nav>
-
-<!-- SQUAD SELECTOR -->
-<div class="squad-selector" id="squadSelector"></div>
-
-<div class="edit-mode-banner" id="editBanner">&#9998; Edit mode ON &mdash; click any sticky to edit its text. Click Save when done.</div>
+<div class="squad-selector" id="squadSelector"><div class="spinner"></div> Loading squads...</div>
+<div class="edit-banner" id="editBanner">&#9998; Edit mode ON — click any sticky to edit, use + to add new ones, hover to delete</div>
 <div class="toast" id="toast"></div>
-
-<!-- VIEWS -->
-<div class="view active" id="view-board">
-  <div class="board-container">
-    <div class="board" id="mainBoard"></div>
-  </div>
-</div>
-
-<div class="view" id="view-program">
-  <div class="board-container">
-    <div id="programBoard"></div>
-  </div>
-</div>
-
-<div class="view" id="view-deps">
-  <div class="board-container">
-    <div id="depsView"></div>
-  </div>
-</div>
-
+<div class="view active" id="view-board"><div class="board-container"><div class="board" id="mainBoard"><div class="loading"><div class="spinner"></div> Loading planning data from database...</div></div></div></div>
+<div class="view" id="view-program"><div class="board-container"><div id="programBoard"></div></div></div>
+<div class="view" id="view-deps"><div class="board-container"><div id="depsView"></div></div></div>
 <div class="progress-overlay" id="progressOverlay">
   <div class="progress-box">
     <div class="progress-title">Generating PowerPoint&#8230;</div>
@@ -218,706 +128,408 @@ nav {
     <div class="progress-track"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script>
-// ─── DATA ────────────────────────────────────────────────────────────────────
-var SPRINTS = [
-  { name: "Sprint 1", weeks: ["wk1","wk2"] },
-  { name: "Sprint 2", weeks: ["wk3","wk4"] },
-  { name: "Sprint 3", weeks: ["wk5","wk6"] },
-  { name: "Sprint 4", weeks: ["wk7","wk8"] },
-  { name: "Sprint 5", weeks: ["wk9","wk10"] },
-  { name: "BRP",      weeks: ["wk11"] },
-  { name: "Sprint 6", weeks: ["wk12"] },
-];
-var ALL_WEEKS = ["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
+// ── Supabase ──────────────────────────────────────────────────────────────────
+var SUPA_URL = "https://jzufzorkfharnfvrjewk.supabase.co";
+var SUPA_KEY = "sb_publishable_TDg1mWjaUfY5mEUsJdjLgQ_bbOeogfx";
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-var SQUADS = [
-  {
-    id: "ef",
-    name: "Enhanced Features Squad",
-    color: "#6B2FBE",
-    confidence: 4,
-    team: [
-      { role: "BT Squad Lead", name: "" },
-      { role: "Business Analyst", name: "Lea Xu" },
-      { role: "Now Assist Dev Lead", name: "Jeenet Pappachan" },
-      { role: "Tester", name: "" }
-    ],
-    useCases: [
-      {
-        id: "uc020",
-        name: "Ticket Summarisation",
-        desc: "Generate AI-powered case summaries of incident history to give agents instant context during handovers between service desks, L2 & L3 and Investigations",
-        phases: [
-          { name: "1. Use Case Definition & Functional Design", startWk: "wk1", endWk: "wk2", owner: "Lea", stickies: ["Use Case Definition","Functional Design","Quick prototyping","Prototype iteration"], color: "white" },
-          { name: "2. Technical Design (HLD&LLD)", startWk: "wk3", endWk: "wk4", owner: "Jeenet", stickies: ["High level technical design","Low level technical design"], color: "white" },
-          { name: "3. Build & Refinement", startWk: "wk5", endWk: "wk8", owner: "Jeenet", bigLabel: "Solution Build", bigColor: "yellow", stickies: ["Test Strategy/ Test Cases development","Warranty Plan development","Sample data gathering","Unit Test","E2E Testing","Solution Iteration","Operational Readiness Testing","Align operational review","Change Management","Hypercare (QA/S)","Run book development"], color: "white" },
-          { name: "4. Testing", startWk: "wk8", endWk: "wk9", owner: "Tester", bigLabel: "UAT", bigColor: "purple", stickies: [], color: "white" },
-          { name: "5. Business go-live & Hypercare", startWk: "wk9", endWk: "wk12", owner: "Lea", bigLabel: "Business Go-live", bigColor: "green", stickies: ["Solution Iteration","Production Deployment","Business Go-live"], color: "white" }
-        ],
-        floatingDeps: ["Detailed plan on governance approvals (security/privacy/AI)"]
-      },
-      {
-        id: "uc022",
-        name: "Auto-Resolution KCI",
-        desc: "Automatically draft resolution email/SMS on case level at incident journey to reduce manual effort and increase consistency",
-        phases: [
-          { name: "1. Use Case Definition & Functional Design", startWk: "wk3", endWk: "wk4", owner: "Lea", stickies: ["As-is Discovery","Use Case Definition","Functional Design","KCI template confirmed via different channels","Quick prototyping","Prototype iteration"], color: "white" },
-          { name: "2. Technical Design (HLD&LLD)", startWk: "wk4", endWk: "wk5", owner: "Jeenet", stickies: ["High level technical design","Low level technical design"], color: "white" },
-          { name: "3. Build & Refinement", startWk: "wk5", endWk: "wk8", owner: "Jeenet", bigLabel: "Solution Build", bigColor: "yellow", stickies: ["Unit Test","E2E Testing","Solution Iteration"], color: "white" },
-          { name: "4. Testing", startWk: "wk8", endWk: "wk9", owner: "Tester", bigLabel: "UAT", bigColor: "purple", stickies: [], color: "white" },
-          { name: "5. Business go-live & Hypercare", startWk: "wk9", endWk: "wk12", owner: "Lea", bigLabel: "Business Go-live", bigColor: "green", stickies: [], color: "white" }
-        ],
-        floatingDeps: ["Get existing SMS/Email template","Email(80%)/ whatsapp/ SMS(20%) (same information/TBC format); Sending through SN portal"]
-      },
-      {
-        id: "uc023",
-        name: "AI Kx Article Creation",
-        desc: "Automatically generate draft knowledge articles from resolved Incidents to grow a reusable knowledge base with minimal manual effort",
-        phases: [
-          { name: "1. Use Case Definition & Functional Design", startWk: "wk1", endWk: "wk3", owner: "Lea", stickies: ["As-is Discovery","Use Case Definition","Functional Design","Prototype decision based on feedback","Quick prototyping"], color: "white" },
-          { name: "2. Technical Design (HLD&LLD)", startWk: "wk3", endWk: "wk4", owner: "Jeenet", stickies: ["High level technical design","Low level technical design","As-is knowledge management lifecycle & aspect/change management"], color: "white" },
-          { name: "3. Build & Refine", startWk: "wk5", endWk: "wk8", owner: "Jeenet", bigLabel: "Solution Build", bigColor: "yellow", stickies: ["Unit Test","E2E Testing","Solution Iteration"], color: "white" },
-          { name: "4. Testing", startWk: "wk8", endWk: "wk9", owner: "Tester", bigLabel: "UAT", bigColor: "purple", stickies: [], color: "white" },
-          { name: "5. Business go-live & Hypercare", startWk: "wk9", endWk: "wk12", owner: "Lea", bigLabel: "Business Go-live", bigColor: "green", stickies: [], color: "white" }
-        ],
-        floatingDeps: ["Process alignment","User stories/ tickets captured on Jira","HLD to publish on confluence page/central repo","Ways of working"]
-      }
-    ],
-    depsAndRisks: {
-      groups: [
-        {
-          label: "Dependencies across all",
-          items: [
-            { text: "Dependencies across all", color: "yellow" },
-            { text: "Risk: delay on timeline if blocked by governance approvals (security/governance/change governance)", color: "pink" },
-            { text: "Mitigation: Jasdeep to provide support on Arch; Jeenet to own the arch design", color: "purple" },
-            { text: "dependencies on NOW ASSIST licenses", color: "yellow" },
-            { text: "Risk: confirm and align on ways of working/delivery approach/change process as the first squad", color: "pink" }
-          ]
-        },
-        {
-          label: "Ticket Summarisation",
-          items: [
-            { text: "Will require refinement on PoC: e.g. SLA; use cases documentation", color: "yellow" },
-            { text: "ACN to be able to access dev/test envs", color: "yellow" },
-            { text: "change management process confirmed", color: "yellow" },
-            { text: "env/code strategy/data refresh to be aligned", color: "yellow" },
-            { text: "Benefit use case definition (interlocking with benefit team; based on the overall benefit framework)", color: "yellow" },
-            { text: "Dependency: env ready: Dev /Test (E2E Testing) / Beta(SIT/UAT)/ Production", color: "green" }
-          ]
-        },
-        {
-          label: "Auto-Resolution KCI",
-          items: [
-            { text: "Dependency: change management (comms on benefit/training/change on ways of working to agent) - BT team", color: "yellow" },
-            { text: "Dependency: work note being updated correctly", color: "purple" },
-            { text: "Dependency: ownership to be confirmed (who's going to review, refine and publish article)", color: "purple" },
-            { text: "Dependency: align with Knowledge Manager on impact on knowledge management lifecycle", color: "yellow" },
-            { text: "Dependency on security and control", color: "yellow" }
-          ]
-        },
-        {
-          label: "KX Article Creation",
-          items: [
-            { text: "Dependency: KCI format to be confirmed", color: "yellow" },
-            { text: "Dependency: human-in-the-loop: human agent to review and refine email/messaging before sending out", color: "purple" },
-            { text: "Risk: dynamic translation on SN if using different languages", color: "pink" }
-          ]
-        }
-      ]
-    },
-    notes: ""
-  },
-  {
-    id: "as1",
-    name: "Automation Squad 1",
-    color: "#0891B2",
-    confidence: 3,
-    team: [
-      { role: "Owner", name: "Upamanyu Ghosh" },
-      { role: "Tech Lead", name: "Vijay" },
-      { role: "Dev", name: "Han" },
-      { role: "Dev", name: "Hari" },
-      { role: "SME", name: "Kasper Ovesen" }
-    ],
-    useCases: [
-      {
-        id: "uc016",
-        name: "Auto-Test Diagnostics",
-        desc: "Predictive intelligence + decision tables to trigger diagnostics automatically. Minimise human triage.",
-        phases: [
-          { name: "1. Discovery & As-Is", startWk: "wk1", endWk: "wk2", owner: "Vijay", stickies: ["Collate As-Is","Arch & Value"], color: "white" },
-          { name: "2. Batch 1 Design", startWk: "wk3", endWk: "wk6", owner: "Han", stickies: ["Batch 1 Discovery","Batch 1 Design"], color: "white" },
-          { name: "3. Batch 2 Discovery", startWk: "wk7", endWk: "wk10", owner: "Han", stickies: ["Batch 2 Discovery","Batch 2 Design"], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "uc030",
-        name: "Repeatable Automations",
-        desc: "Self-healing workflows (restart, cache refresh). NFF quick wins prioritised.",
-        phases: [
-          { name: "1. Discovery", startWk: "wk3", endWk: "wk4", owner: "Upamanyu", stickies: ["Discovery"], color: "white" },
-          { name: "2. Design", startWk: "wk5", endWk: "wk8", owner: "Han", stickies: ["Design","Batch 2 Discovery"], color: "white" }
-        ],
-        floatingDeps: []
-      }
-    ],
-    depsAndRisks: {
-      groups: [
-        {
-          label: "Dependencies",
-          items: [
-            { text: "HLD on hold — tool selection for API Build/Modification pending", color: "pink" },
-            { text: "L2 resolver group workshops needed for Batch 2", color: "yellow" },
-            { text: "ServiceNow diagnostic results POC", color: "yellow" },
-            { text: "Rule-Based NBA Layer requirements from Ops", color: "yellow" }
-          ]
-        }
-      ]
-    },
-    notes: ""
-  },
-  {
-    id: "as2",
-    name: "Automation Squad 2",
-    color: "#0D9488",
-    confidence: 3,
-    team: [
-      { role: "Owner", name: "Bamani Devi Gobalan" },
-      { role: "BA", name: "Paul B" },
-      { role: "Dev", name: "TBC" }
-    ],
-    useCases: [
-      {
-        id: "uc021",
-        name: "Resolver Task Creation",
-        desc: "Phase 1: CMDB routing. Phase 2: combine with Auto Diagnostics + Predictive Intelligence.",
-        phases: [
-          { name: "1. Requirements", startWk: "wk1", endWk: "wk2", owner: "Bamani", stickies: ["Requirements"], color: "white" },
-          { name: "2. HLD & LLD", startWk: "wk3", endWk: "wk4", owner: "Paul B", stickies: ["HLD & LLD"], color: "white" },
-          { name: "3. Build", startWk: "wk5", endWk: "wk8", owner: "Dev TBC", bigLabel: "Solution Build", bigColor: "yellow", stickies: [], color: "white" },
-          { name: "4. Testing", startWk: "wk8", endWk: "wk9", owner: "Bamani", bigLabel: "UAT", bigColor: "teal", stickies: [], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "uc024",
-        name: "Intelligent Auto-closure",
-        desc: "Incidents auto-resolved via PI + Now Assist after meeting required criteria.",
-        phases: [
-          { name: "1. Requirements", startWk: "wk1", endWk: "wk2", owner: "Bamani", stickies: ["Requirements"], color: "white" },
-          { name: "2. HLD & LLD", startWk: "wk3", endWk: "wk4", owner: "Paul B", stickies: ["HLD & LLD"], color: "white" },
-          { name: "3. Build", startWk: "wk5", endWk: "wk7", owner: "Dev TBC", stickies: ["Build"], color: "white" }
-        ],
-        floatingDeps: ["Functional approval pending"]
-      }
-    ],
-    depsAndRisks: {
-      groups: [
-        {
-          label: "Risks",
-          items: [
-            { text: "UC024 functional approval pending", color: "pink" },
-            { text: "Resolver group auto-assignment challenged by Ops team", color: "pink" }
-          ]
-        },
-        {
-          label: "Dependencies",
-          items: [
-            { text: "CMDB data quality for Phase 1", color: "yellow" },
-            { text: "Ops agreement on resolver group assignment", color: "yellow" }
-          ]
-        }
-      ]
-    },
-    notes: ""
-  },
-  {
-    id: "df",
-    name: "Data Foundations Squad",
-    color: "#D97706",
-    confidence: 3,
-    team: [
-      { role: "Owner", name: "Jayme Huskinson" },
-      { role: "Data Arch", name: "Sonali" },
-      { role: "Data Eng", name: "Chetan" },
-      { role: "Event Corr", name: "Narendra" },
-      { role: "Integration", name: "Simran" },
-      { role: "BFG/GCP", name: "Prakash" }
-    ],
-    useCases: [
-      {
-        id: "f1",
-        name: "F1 Data Model & CMDB",
-        desc: "Baseline data architecture, CMDB as-is review, initial inventory design for IP Connect.",
-        phases: [
-          { name: "1. Define Data Input", startWk: "wk1", endWk: "wk2", owner: "Sonali", stickies: ["Define Required Data Input for each use case in scope for PI1/PI2"], color: "white" },
-          { name: "2. Identify Elements", startWk: "wk3", endWk: "wk4", owner: "Chetan", stickies: ["Identify mandatory vs optional data elements and additional parameters (if any)","Map data requirements to source systems and CMDB domains","Validate whether new Telco classes have been leveraged during data mapping exercise and align with CSEM framework"], color: "white" },
-          { name: "3. Map to Sources", startWk: "wk5", endWk: "wk8", owner: "Narendra", stickies: ["Produce a Use-case to Data Requirements Matrix","Identify gaps between current DQ parameters and requirements for each use case and recommend any DQ remediation activities needed","Define CI Identification rules using ServiceNow IRE (Identification and Reconciliation Engine), including keys, attributes, and reconciliation logic"], color: "white" },
-          { name: "4. Architecture Document", startWk: "wk9", endWk: "wk12", owner: "Jayme", stickies: ["Document data quality requirement for each use case","Publish baseline (common) data model for confirmed use cases. (which can be tailored to specific)","Overral Use Case Data Architecture Document"], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "f2",
-        name: "F2 Event Correlation",
-        desc: "List all BT Business event sources, payloads & attributes, normalisation approach.",
-        phases: [
-          { name: "1. Event Sources", startWk: "wk1", endWk: "wk2", owner: "Narendra", stickies: ["Identify event / alert sources and current event exposure mechanisms for each source (prioritising PI1/PI2 use cases)"], color: "white" },
-          { name: "2. Payloads & Model", startWk: "wk3", endWk: "wk6", owner: "Narendra", stickies: ["Document event formats received from different sources and identify consolidations (e.g. mandatory fields to format constraints)","Define canonical event model based on TSOM - e.g. standard event fields (to be confirmed)","Agree canonical event model with relevant source system / domain teams (e.g. Netcrazy, OSS)","For each source, map source-specific fields to canonical model"], color: "white" },
-          { name: "3. Normalisation", startWk: "wk7", endWk: "wk10", owner: "Narendra", stickies: ["Define event correlation requirements from a use case perspective","For each source, map source taxonomy (e.g. event classification / domain / service entity) to format canonical","Understand current event correlation approach, gaps","Map event correlation requirements to available event correlation patterns / functionality within TSOM (topology based, ML based etc)","Event No-malisation and Correlation Strategy"], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "f3",
-        name: "F3 CI Binding",
-        desc: "Document how each event source currently binds to CIs.",
-        phases: [
-          { name: "1. CI Binding Approach", startWk: "wk5", endWk: "wk10", owner: "Jayme", stickies: ["Define what CI data needs to be bound to events (e.g. location, customer) and sources for the data (if there is anything apart from the CMDB) for each event type","Establish data freshness requirements (maximum age of CI to be considered useful for binding)","Define binding logic based on TSOM functionality (rules, AI/ML)","CI Binding Approach Document"] , color: "white" }
-        ],
-        floatingDeps: []
-      }
-    ],
-    depsAndRisks: {
-      groups: [
-        {
-          label: "Dependencies & Risks",
-          items: [
-            { text: "Identification of product scope", color: "yellow" },
-            { text: "Identification of use cases in scope", color: "yellow" },
-            { text: "existing data model (documentation) - BFG and NGSD inputs on current data model", color: "yellow" },
-            { text: "Network inventory & topology coverage needs to be explicitly called out", color: "yellow" },
-            { text: "KDD - BFG", color: "yellow" },
-            { text: "Capturing all Network, IT, Voice etc... for reconciliation", color: "yellow" },
-            { text: "ServiceNow capacity to consume events", color: "yellow" },
-            { text: "Strong data foundation", color: "yellow" },
-            { text: "Current CI binding approach (Tony Reel to provide inputs)", color: "yellow" },
-            { text: "Getting existing products", color: "yellow" },
-            { text: "BFG GCP instance access not in place — CRITICAL PATH", color: "pink" },
-            { text: "CMDB data quality risk", color: "pink" }
-          ]
-        }
-      ]
-    },
-    notes: "Process for reconciliation of NW Discovery vs data from L2C systems and downstream activities (e.g. remediation). Attribute mapping for legacy products needs to be done eventually but not necessarily in PI 5. There is already a canonical model which needs to be reviewed in light of the requirements of the new use cases."
-  },
-  {
-    id: "arch",
-    name: "Architecture Squad",
-    color: "#BE185D",
-    confidence: 3,
-    team: [
-      { role: "EA Lead / Owner", name: "Hari M" },
-      { role: "Owner / EA", name: "Jasdeep S" },
-      { role: "SNOW Architect", name: "Han N G" },
-      { role: "TSOM Architect", name: "TBC" }
-    ],
-    useCases: [
-      {
-        id: "kdd1",
-        name: "KDD1 Inventory Reconciliation",
-        desc: "Baseline steer: IRE rules with ServiceNow, Entuity as discovery source.",
-        phases: [
-          { name: "1. Workshop & Discovery", startWk: "wk1", endWk: "wk4", owner: "Hari M", stickies: ["Workshop started"], color: "white" },
-          { name: "2. KDD Finalised", startWk: "wk9", endWk: "wk10", owner: "Jasdeep", stickies: ["KDD Finalised"], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "kdd2",
-        name: "KDD2 Metrics & Anomaly Detection",
-        desc: "Infrastructure requirements for metrics ingestion and anomaly detection steer.",
-        phases: [
-          { name: "1. OSS Apps Rationalisation", startWk: "wk1", endWk: "wk4", owner: "Han N G", stickies: ["OSS Apps Rationalisation"], color: "white" },
-          { name: "2. KDD Finalised", startWk: "wk9", endWk: "wk10", owner: "Han N G", stickies: ["KDD Finalised"], color: "white" }
-        ],
-        floatingDeps: ["Awaiting ServiceNow response (Roy Silon)"]
-      },
-      {
-        id: "kdd3",
-        name: "KDD3 Event Ingestion Approach",
-        desc: "Kafka REST API vs Stream Connect. Confirm raw vs pre-processed events.",
-        phases: [
-          { name: "1. SD WAN Telemetry", startWk: "wk3", endWk: "wk6", owner: "Jasdeep", stickies: ["SD WAN Telemetry"], color: "white" },
-          { name: "2. KDD Finalised", startWk: "wk9", endWk: "wk10", owner: "Jasdeep", stickies: ["KDD Finalised"], color: "white" }
-        ],
-        floatingDeps: []
-      },
-      {
-        id: "kdd4",
-        name: "KDD4 Data Transformation Layer",
-        desc: "TSOM vs TSOM+GenWizard. Approved by Mujahid.",
-        phases: [
-          { name: "1. Validate TSOM", startWk: "wk5", endWk: "wk8", owner: "Han N G", stickies: ["Validate TSOM"], color: "white" },
-          { name: "2. KDD Finalised", startWk: "wk9", endWk: "wk10", owner: "Han N G", stickies: ["KDD Finalised"], color: "white" }
-        ],
-        floatingDeps: []
-      }
-    ],
-    depsAndRisks: {
-      groups: [
-        {
-          label: "Risks",
-          items: [
-            { text: "Anomaly detection use cases not defined by BT Ops team", color: "pink" },
-            { text: "BFG data validation pending — BSDVSAL-15438", color: "pink" }
-          ]
-        },
-        {
-          label: "Dependencies",
-          items: [
-            { text: "KDD1: Alex Bell sign-off on BFG", color: "yellow" },
-            { text: "KDD2: ServiceNow SME response (Roy Silon)", color: "yellow" },
-            { text: "KDD3: ServiceNow event ingestion clarification", color: "yellow" },
-            { text: "Ops use cases for anomaly detection", color: "yellow" }
-          ]
-        }
-      ]
-    },
-    notes: ""
-  }
-];
-
-// ─── STATE ────────────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────────
+var DB = { squads:[], useCases:[], phases:[], stickies:[], floatingDeps:[], depGroups:[], depItems:[], teamMembers:[] };
 var currentSquad = 0;
 var currentView = "board";
 var editMode = false;
+var SPRINTS = [{name:"Sprint 1",weeks:["wk1","wk2"]},{name:"Sprint 2",weeks:["wk3","wk4"]},{name:"Sprint 3",weeks:["wk5","wk6"]},{name:"Sprint 4",weeks:["wk7","wk8"]},{name:"Sprint 5",weeks:["wk9","wk10"]},{name:"BRP",weeks:["wk11"]},{name:"Sprint 6",weeks:["wk12"]}];
+var ALL_WEEKS = ["wk1","wk2","wk3","wk4","wk5","wk6","wk7","wk8","wk9","wk10","wk11","wk12"];
+var WEEK_W = 88, LABEL_W = 170;
 
-// ─── RENDER SQUAD SELECTOR ───────────────────────────────────────────────────
-function renderSelector() {
-  var el = document.getElementById("squadSelector");
-  var html = "";
-  for (var i = 0; i < SQUADS.length; i++) {
-    var sq = SQUADS[i];
-    var active = i === currentSquad;
-    html += '<button class="squad-btn" onclick="selectSquad(' + i + ')" style="background:' +
-      (active ? sq.color : "#fff") + ';color:' + (active ? "#fff" : sq.color) +
-      ';border-color:' + sq.color + '">' + sq.name + '</button>';
+// ── Load all data ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    var [sq,uc,ph,st,fd,dg,di,tm] = await Promise.all([
+      sb.from("squads").select("*").order("name"),
+      sb.from("use_cases").select("*").order("sort_order"),
+      sb.from("phases").select("*").order("sort_order"),
+      sb.from("stickies").select("*").order("sort_order"),
+      sb.from("floating_deps").select("*").order("sort_order"),
+      sb.from("dep_groups").select("*").order("sort_order"),
+      sb.from("dep_items").select("*").order("sort_order"),
+      sb.from("team_members").select("*").order("sort_order"),
+    ]);
+    DB.squads = sq.data || [];
+    DB.useCases = uc.data || [];
+    DB.phases = ph.data || [];
+    DB.stickies = st.data || [];
+    DB.floatingDeps = fd.data || [];
+    DB.depGroups = dg.data || [];
+    DB.depItems = di.data || [];
+    DB.teamMembers = tm.data || [];
+    renderSelector();
+    renderBoard();
+  } catch(e) {
+    showToast("Failed to load data: " + e.message, true);
   }
-  // Edit toggle
-  html += '<button onclick="toggleEdit()" style="margin-left:auto;background:' +
-    (editMode ? "#FCD34D" : "rgba(255,255,255,.7)") +
-    ';color:' + (editMode ? "#4C1D95" : "#374151") +
-    ';border:1.5px solid #D1D5DB;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700">' +
-    (editMode ? "&#10003; Save" : "&#9998; Edit") + '</button>';
-  el.innerHTML = html;
 }
 
-// ─── RENDER MAIN BOARD ───────────────────────────────────────────────────────
-function renderBoard() {
-  var sq = SQUADS[currentSquad];
-  var board = document.getElementById("mainBoard");
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function sq() { return DB.squads[currentSquad] || {}; }
+function ucsFor(sqId) { return DB.useCases.filter(function(u){return u.squad_id===sqId}); }
+function phasesFor(ucId) { return DB.phases.filter(function(p){return p.use_case_id===ucId}); }
+function stickiesFor(phId) { return DB.stickies.filter(function(s){return s.phase_id===phId}); }
+function floatFor(ucId) { return DB.floatingDeps.filter(function(f){return f.use_case_id===ucId}); }
+function groupsFor(sqId) { return DB.depGroups.filter(function(g){return g.squad_id===sqId}); }
+function itemsFor(gId) { return DB.depItems.filter(function(i){return i.group_id===gId}); }
+function teamFor(sqId) { return DB.teamMembers.filter(function(t){return t.squad_id===sqId}); }
+function wkIdx(wk) { return ALL_WEEKS.indexOf(wk); }
 
-  // Sprint grid column template
-  // Label col (160px) + 12 week cols
-  var weekW = 88; // px per week
-  var labelW = 170;
-  var gridCols = labelW + "px " + ALL_WEEKS.map(function() { return weekW + "px"; }).join(" ");
+function showToast(msg,isError){
+  var t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show"+(isError?" error":"");
+  setTimeout(function(){t.classList.remove("show")},4000);
+}
+function setProgress(pct,msg){
+  document.getElementById("progressBar").style.width=pct+"%";
+  if(msg) document.getElementById("progressSub").textContent=msg;
+}
 
-  var html = "";
+// ── Render selector ───────────────────────────────────────────────────────────
+function renderSelector(){
+  var el=document.getElementById("squadSelector");
+  var html="";
+  DB.squads.forEach(function(s,i){
+    var active=i===currentSquad;
+    html+='<button class="squad-btn" onclick="selectSquad('+i+')" style="background:'+(active?s.color:"#fff")+';color:'+(active?"#fff":s.color)+';border-color:'+s.color+'">'+s.name+'</button>';
+  });
+  html+='<button onclick="toggleEdit()" style="margin-left:auto;background:'+(editMode?"#FCD34D":"rgba(255,255,255,.7)")+';color:'+(editMode?"#4C1D95":"#374151")+';border:1.5px solid #D1D5DB;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:11px;font-weight:700">'+(editMode?"&#10003; Save Changes":"&#9998; Edit")+'</button>';
+  el.innerHTML=html;
+}
 
-  // Squad header
-  html += '<div class="squad-header-bar" style="background:' + sq.color + '">';
-  html += '<h2>' + sq.name + '</h2>';
-  html += '<span style="background:rgba(255,255,255,.2);border-radius:6px;padding:3px 10px;color:#fff;font-size:11px;font-weight:700">Confidence: ' + sq.confidence + '/5</span>';
-  html += '</div>';
+// ── Render board ──────────────────────────────────────────────────────────────
+function renderBoard(){
+  var s=sq(); if(!s.id){return;}
+  var board=document.getElementById("mainBoard");
+  var html="";
+
+  // Header
+  html+='<div class="squad-header-bar" style="background:'+s.color+'">';
+  html+='<h2>'+s.name+'</h2>';
+  html+='<div style="display:flex;align-items:center;gap:10px">';
+  // Confidence buttons
+  html+='<div style="background:rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;display:flex;align-items:center;gap:5px"><span style="color:#DDD6FE;font-size:10px">Confidence</span>';
+  for(var v=1;v<=5;v++){
+    html+='<button onclick="setConfidence('+v+')" style="width:20px;height:20px;border-radius:3px;border:none;cursor:pointer;font-size:10px;font-weight:700;background:'+(s.confidence>=v?"#FCD34D":"rgba(255,255,255,.25)")+';color:'+(s.confidence>=v?"#92400E":"rgba(255,255,255,.6)")+'">'+v+'</button>';
+  }
+  html+='</div></div></div>';
 
   // Top panels
-  html += '<div class="board-top" style="border-color:' + sq.color + '44">';
+  html+='<div class="board-top">';
 
   // Team capacity
-  html += '<div class="panel-box"><div class="panel-title" style="background:' + sq.color + '">Team Capacity</div><div class="panel-body">';
-  html += '<div class="sticky-grid">';
-  for (var ti = 0; ti < sq.team.length; ti++) {
-    var tm = sq.team[ti];
-    html += '<div class="sticky yellow" style="font-size:9px"><strong>' + tm.role + '</strong>' + (tm.name ? '<br>' + tm.name : '') + '</div>';
-  }
-  html += '</div></div></div>';
+  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Team Capacity</div><div class="panel-body"><div class="sticky-grid">';
+  teamFor(s.id).forEach(function(m){
+    html+='<div class="sticky yellow" style="font-size:9px"><strong>'+m.role+'</strong>'+(m.name?'<br>'+m.name:'')+'</div>';
+  });
+  html+='</div></div></div>';
 
-  // Overview / workstream 1-pager placeholder
-  html += '<div class="panel-box"><div class="panel-title" style="background:' + sq.color + '">' + sq.name + ' &mdash; Workstream Overview</div>';
-  html += '<div class="panel-body" style="font-size:10px;color:#6B7280;padding:10px"><em>Workstream 1-pager &mdash; attach or summarise here</em></div></div>';
+  // Overview
+  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">'+s.name+' &mdash; Workstream Overview</div><div class="panel-body" style="font-size:10px;color:#6B7280;padding:10px"><em>Workstream overview &mdash; summarise key goals here</em></div></div>';
 
-  // Deps & Risks summary
-  html += '<div class="panel-box"><div class="panel-title" style="background:' + sq.color + '">Dependencies &amp; Risks</div><div class="panel-body">';
-  var allDeps = [];
-  var allRisks = [];
-  for (var gi = 0; gi < sq.depsAndRisks.groups.length; gi++) {
-    var grp = sq.depsAndRisks.groups[gi];
-    for (var di = 0; di < grp.items.length; di++) {
-      if (grp.items[di].color === "pink") allRisks.push(grp.items[di].text);
-      else allDeps.push(grp.items[di].text);
-    }
-  }
-  html += '<div style="font-size:9px;font-weight:700;color:#4C1D95;margin-bottom:4px">RISKS</div>';
-  for (var ri = 0; ri < Math.min(allRisks.length, 3); ri++) {
-    html += '<div class="sticky pink" style="margin-bottom:4px;font-size:9px">' + allRisks[ri] + '</div>';
-  }
-  html += '<div style="font-size:9px;font-weight:700;color:#4C1D95;margin:6px 0 4px">DEPENDENCIES</div>';
-  for (var dii = 0; dii < Math.min(allDeps.length, 3); dii++) {
-    html += '<div class="sticky yellow" style="margin-bottom:4px;font-size:9px">' + allDeps[dii] + '</div>';
-  }
-  html += '</div></div>';
+  // Deps summary
+  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Dependencies &amp; Risks</div><div class="panel-body">';
+  var risks=[], deps=[];
+  groupsFor(s.id).forEach(function(g){ itemsFor(g.id).forEach(function(it){ if(it.color==="pink") risks.push(it.text); else deps.push(it.text); }); });
+  if(risks.length){html+='<div style="font-size:9px;font-weight:700;color:#4C1D95;margin-bottom:4px">RISKS</div>'; risks.slice(0,2).forEach(function(r){html+='<div class="sticky pink" style="margin-bottom:4px;font-size:9px">'+r+'</div>';});}
+  if(deps.length){html+='<div style="font-size:9px;font-weight:700;color:#4C1D95;margin:5px 0 4px">DEPS</div>'; deps.slice(0,2).forEach(function(d){html+='<div class="sticky yellow" style="margin-bottom:4px;font-size:9px">'+d+'</div>';});}
+  html+='</div></div>';
 
   // Notes
-  html += '<div class="panel-box"><div class="panel-title" style="background:' + sq.color + '">Notes</div>';
-  html += '<div class="panel-body" style="font-size:9.5px;color:#374151">' + (sq.notes || '<em style="color:#9CA3AF">Notes area</em>') + '</div></div>';
-
-  html += '</div>'; // end board-top
+  html+='<div class="panel-box"><div class="panel-title" style="background:'+s.color+'">Notes</div><div class="panel-body" style="font-size:9.5px;color:#374151">'+(s.notes||'<em style="color:#9CA3AF">Notes area</em>')+'</div></div>';
+  html+='</div>';
 
   // Sprint grid
-  html += '<div class="sprint-grid-wrap">';
+  var gridCols=LABEL_W+"px "+ALL_WEEKS.map(function(){return WEEK_W+"px";}).join(" ");
+  html+='<div class="sprint-grid-wrap">';
 
-  // Sprint headers row
-  html += '<div class="sprint-headers" style="display:grid;grid-template-columns:' + labelW + 'px ';
-  for (var si = 0; si < SPRINTS.length; si++) {
-    html += (SPRINTS[si].weeks.length * weekW) + 'px ';
-  }
-  html += '">';
-  html += '<div style="border-right:1px solid #E5E0F8;background:#F8F6FF"></div>';
-  for (var si2 = 0; si2 < SPRINTS.length; si2++) {
-    var sp = SPRINTS[si2];
-    html += '<div class="sprint-header-cell ' + (sp.name === "BRP" ? "brp" : "") + '" style="grid-column:span ' + sp.weeks.length + '">' + sp.name + '</div>';
-  }
-  html += '</div>';
+  // Sprint header row
+  html+='<div style="display:grid;grid-template-columns:'+LABEL_W+'px '+SPRINTS.map(function(sp){return sp.weeks.length*WEEK_W+"px";}).join(" ")+'"><div style="border-right:1px solid #E5E0F8;background:#F8F6FF"></div>';
+  SPRINTS.forEach(function(sp){
+    html+='<div class="sprint-header-cell '+(sp.name==="BRP"?"brp":"")+'">'+sp.name+'</div>';
+  });
+  html+='</div>';
 
-  // Week sub-headers
-  html += '<div class="week-headers" style="display:grid;grid-template-columns:' + labelW + 'px ' + ALL_WEEKS.map(function() { return weekW + "px"; }).join(" ") + '">';
-  html += '<div style="border-right:1px solid #E5E0F8;background:#F3F0FF;padding:4px 6px;font-size:9px;color:#6B7280;font-weight:600">Use Case</div>';
-  for (var wi = 0; wi < ALL_WEEKS.length; wi++) {
-    html += '<div class="week-cell">' + ALL_WEEKS[wi] + '</div>';
-  }
-  html += '</div>';
+  // Week subheaders
+  html+='<div style="display:grid;grid-template-columns:'+gridCols+'"><div style="border-right:1px solid #E5E0F8;background:#F3F0FF;padding:4px 6px;font-size:9px;color:#6B7280;font-weight:600">Use Case</div>';
+  ALL_WEEKS.forEach(function(wk){html+='<div class="week-cell">'+wk+'</div>';});
+  html+='</div>';
 
   // Use case rows
-  for (var uci = 0; uci < sq.useCases.length; uci++) {
-    var uc = sq.useCases[uci];
+  var ucs=ucsFor(s.id);
+  ucs.forEach(function(uc){
+    var phases=phasesFor(uc.id);
+    var maxPhaseRow=0;
+    phases.forEach(function(ph,pi){maxPhaseRow=Math.max(maxPhaseRow,pi);});
+    var rowHeight=Math.max(160, (maxPhaseRow+1)*100+20);
 
-    html += '<div class="uc-row" style="display:grid;grid-template-columns:' + labelW + 'px 1fr;border-bottom:2px solid ' + sq.color + '44;min-height:180px">';
+    html+='<div style="display:grid;grid-template-columns:'+LABEL_W+'px 1fr;border-bottom:2px solid '+s.color+'44;min-height:'+rowHeight+'px">';
 
     // Label
-    html += '<div class="uc-label">';
-    html += '<div class="uc-label-badge" style="background:' + sq.color + '">' + uc.name + '</div>';
-    html += '<div class="uc-label-desc">' + uc.desc + '</div>';
-    html += '</div>';
-
-    // Canvas — scrollable grid
-    html += '<div style="display:grid;grid-template-columns:' + ALL_WEEKS.map(function() { return weekW + "px"; }).join(" ") + ';position:relative;overflow:visible">';
-
-    // Background week columns (alternating)
-    for (var wci = 0; wci < ALL_WEEKS.length; wci++) {
-      var isBRP = ALL_WEEKS[wci] === "wk11";
-      html += '<div style="border-right:1px solid #EEE;background:' + (isBRP ? "#FFFBEB" : (wci % 2 === 0 ? "#FAFAFA" : "#fff")) + ';min-height:inherit"></div>';
+    html+='<div class="uc-label"><div class="uc-label-badge" style="background:'+s.color+'">'+uc.name+'</div><div class="uc-label-desc">'+uc.description+'</div>';
+    if(editMode){
+      html+='<button onclick="addPhase(\''+uc.id+'\')" style="margin-top:6px;background:#EDE9FE;color:#4C1D95;border:1px dashed #7C3AED;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:9px;font-weight:700">+ Phase</button>';
     }
+    html+='</div>';
 
-    // Phase boxes overlay
-    html += '<div style="position:absolute;inset:8px;display:flex;flex-direction:column;gap:8px">';
+    // Canvas
+    html+='<div style="position:relative;overflow:visible">';
+    // BG columns
+    html+='<div style="display:grid;grid-template-columns:'+ALL_WEEKS.map(function(){return WEEK_W+"px";}).join(" ")+';position:absolute;inset:0">';
+    ALL_WEEKS.forEach(function(wk,wi){
+      var isBRP=wk==="wk11";
+      html+='<div style="border-right:1px solid #EEE;background:'+(isBRP?"#FFFBEB":(wi%2===0?"#FAFAFA":"#fff"))+';height:100%"></div>';
+    });
+    html+='</div>';
 
-    for (var pi = 0; pi < uc.phases.length; pi++) {
-      var ph = uc.phases[pi];
+    // Phase boxes
+    phases.forEach(function(ph,pi){
+      var si=wkIdx(ph.start_week), ei=wkIdx(ph.end_week);
+      if(si<0)si=0; if(ei<0)ei=ALL_WEEKS.length-1;
+      var left=si*WEEK_W, width=(ei-si+1)*WEEK_W-8, top=10+pi*95;
+      var stickies=stickiesFor(ph.id);
 
-      // Calculate left/width based on week positions
-      var startIdx = ALL_WEEKS.indexOf(ph.startWk);
-      var endIdx = ALL_WEEKS.indexOf(ph.endWk);
-      if (startIdx < 0) startIdx = 0;
-      if (endIdx < 0) endIdx = ALL_WEEKS.length - 1;
-      var left = startIdx * weekW;
-      var width = (endIdx - startIdx + 1) * weekW - 8;
+      html+='<div class="phase-box" style="left:'+left+'px;width:'+width+'px;top:'+top+'px;min-height:80px">';
+      html+='<div class="phase-box-header"><span style="font-size:14px">&#128100;</span> '+ph.name+' <span class="phase-owner">'+ph.owner+'</span>';
+      if(editMode) html+='<button onclick="deletePhase('+ph.id+',\''+uc.id+'\')" style="margin-left:auto;background:#FEE2E2;color:#B91C1C;border:none;border-radius:3px;padding:1px 5px;cursor:pointer;font-size:8px">&#10005;</button>';
+      html+='</div>';
 
-      html += '<div class="phase-box" style="position:absolute;left:' + left + 'px;width:' + width + 'px;top:' + (pi * 95) + 'px;min-height:80px">';
-      html += '<div class="phase-box-header"><span class="person-icon">&#128100;</span> <span>' + ph.name + '</span><span class="phase-owner">' + ph.owner + '</span></div>';
-
-      if (ph.bigLabel) {
-        html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
-        html += '<div class="phase-label-big ' + ph.bigColor + '">' + ph.bigLabel + '</div>';
+      if(ph.big_label){
+        html+='<div class="phase-label-big '+ph.big_color+'">'+ph.big_label+'</div>';
       }
 
-      html += '<div class="phase-stickies">';
-      for (var sti = 0; sti < ph.stickies.length; sti++) {
-        html += '<div class="sticky yellow" style="font-size:8.5px;min-width:60px;max-width:90px">' + ph.stickies[sti] + '</div>';
-      }
-      html += '</div>';
+      html+='<div class="phase-stickies">';
+      stickies.forEach(function(st){
+        html+='<div class="sticky-wrap"><div class="sticky yellow '+(editMode?"editable-sticky":"'')+'" '+(editMode?'contenteditable="true" onblur="updateSticky('+st.id+',this.textContent)"':'')+'>'+st.text+'</div>';
+        if(editMode) html+='<button class="btn-del-sticky" onclick="deleteSticky('+st.id+',\''+ph.id+'\')">&#10005;</button>';
+        html+='</div>';
+      });
+      if(editMode) html+='<button class="add-sticky-btn" onclick="addSticky('+ph.id+')">+ sticky</button>';
+      html+='</div>';
+      html+='</div>';
+    });
 
-      if (ph.bigLabel) html += '</div>';
-      html += '</div>'; // phase-box
+    // Floating deps
+    var fdeps=floatFor(uc.id);
+    if(fdeps.length||editMode){
+      html+='<div style="position:absolute;right:-125px;top:8px;width:115px;display:flex;flex-direction:column;gap:4px">';
+      fdeps.forEach(function(fd){
+        html+='<div class="sticky-wrap"><div class="sticky yellow" style="font-size:8.5px">'+(editMode?'<span contenteditable="true" onblur="updateFloatDep('+fd.id+',this.textContent)">'+fd.text+'</span>':fd.text)+'</div>';
+        if(editMode) html+='<button class="btn-del-sticky" onclick="deleteFloatDep('+fd.id+',\''+uc.id+'\')">&#10005;</button>';
+        html+='</div>';
+      });
+      if(editMode) html+='<button class="add-sticky-btn" onclick="addFloatDep(\''+uc.id+'\')">+ dep</button>';
+      html+='</div>';
     }
 
-    // Floating deps for this UC (shown to far right)
-    if (uc.floatingDeps && uc.floatingDeps.length > 0) {
-      var depLeft = (ALL_WEEKS.length - 1) * weekW - 80;
-      html += '<div style="position:absolute;right:-120px;top:8px;width:110px;display:flex;flex-direction:column;gap:4px">';
-      for (var fdi = 0; fdi < uc.floatingDeps.length; fdi++) {
-        html += '<div class="sticky yellow" style="font-size:8.5px">' + uc.floatingDeps[fdi] + '</div>';
-      }
-      html += '</div>';
-    }
+    html+='</div></div>';
+  });
 
-    html += '</div>'; // overlay
-    html += '</div>'; // grid
-    html += '</div>'; // uc-row
+  if(editMode){
+    html+='<div style="padding:10px;background:#F8F6FF;border-top:1px dashed #DDD6FE"><button onclick="addUseCase(\''+s.id+'\')" style="background:#EDE9FE;color:#4C1D95;border:1px dashed #7C3AED;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700">+ Add Use Case</button></div>';
   }
 
-  html += '</div>'; // sprint-grid-wrap
+  html+='</div>'; // sprint-grid-wrap
 
-  // Dependencies & Risks full panel + User Stories
-  html += '<div class="side-panels">';
+  // Side panels
+  html+='<div class="side-panels">';
+  html+='<div class="deps-panel"><div class="deps-panel-title">Dependencies &amp; Risks</div><div class="deps-panel-body">';
+  groupsFor(s.id).forEach(function(g){
+    html+='<div class="deps-group"><div class="deps-group-label">'+g.label+'</div><div class="deps-sticky-row">';
+    itemsFor(g.id).forEach(function(it){
+      html+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:130px">'+(editMode?'<span contenteditable="true" onblur="updateDepItem('+it.id+',this.textContent)">'+it.text+'</span>':it.text)+'</div>';
+    });
+    if(editMode) html+='<button class="add-sticky-btn" onclick="addDepItem('+g.id+')">+ item</button>';
+    html+='</div></div>';
+  });
+  html+='</div></div>';
+  html+='<div class="stories-panel"><div class="stories-panel-title">User Stories</div><div class="stories-panel-body">';
+  for(var i=0;i<12;i++) html+='<div class="story-empty"></div>';
+  html+='</div></div>';
+  html+='</div>';
 
-  // Full deps panel
-  html += '<div class="deps-panel">';
-  html += '<div class="deps-panel-title">Dependencies &amp; Risks</div>';
-  html += '<div class="deps-panel-body">';
-  for (var gj = 0; gj < sq.depsAndRisks.groups.length; gj++) {
-    var grp2 = sq.depsAndRisks.groups[gj];
-    html += '<div class="deps-group">';
-    html += '<div class="deps-group-label">' + grp2.label + '</div>';
-    html += '<div class="deps-sticky-row">';
-    for (var dk = 0; dk < grp2.items.length; dk++) {
-      html += '<div class="sticky ' + grp2.items[dk].color + '" style="font-size:9px;min-width:80px;max-width:130px">' + grp2.items[dk].text + '</div>';
-    }
-    html += '</div></div>';
-  }
-  html += '</div></div>';
-
-  // User stories panel
-  html += '<div class="stories-panel">';
-  html += '<div class="stories-panel-title">User Stories</div>';
-  html += '<div class="stories-panel-body">';
-  for (var usi = 0; usi < 12; usi++) {
-    html += '<div class="story-empty"></div>';
-  }
-  html += '</div></div>';
-
-  html += '</div>'; // side-panels
-
-  board.innerHTML = html;
+  board.innerHTML=html;
 }
 
-// ─── PROGRAM BOARD ───────────────────────────────────────────────────────────
-function renderProgramBoard() {
-  var el = document.getElementById("programBoard");
-  var html = '<div style="background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow-x:auto">';
-  html += '<div style="font-weight:800;font-size:15px;color:#4C1D95;margin-bottom:12px">Program Board &mdash; All Squads &times; All Sprints</div>';
-  html += '<table style="border-collapse:collapse;width:100%;font-size:10px;min-width:900px">';
-  html += '<thead><tr><th style="background:#4C1D95;color:#fff;padding:7px 10px;text-align:left;min-width:140px">Squad</th>';
-  for (var si = 0; si < SPRINTS.length; si++) {
-    var sp = SPRINTS[si];
-    html += '<th style="background:' + (sp.name === "BRP" ? "#FCD34D" : "#4C1D95") + ';color:' + (sp.name === "BRP" ? "#1F2937" : "#fff") + ';padding:7px 4px;text-align:center;min-width:' + (sp.weeks.length * 60) + 'px" colspan="' + sp.weeks.length + '">' + sp.name + '</th>';
-  }
-  html += '</tr>';
-  // Week subheaders
-  html += '<tr><td style="background:#F3F0FF;padding:3px 10px;font-size:8px;color:#6B7280">Use Cases</td>';
-  for (var wi2 = 0; wi2 < ALL_WEEKS.length; wi2++) {
-    html += '<td style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border:1px solid #E5E0F8">' + ALL_WEEKS[wi2] + '</td>';
-  }
-  html += '</tr></thead><tbody>';
-
-  for (var qi = 0; qi < SQUADS.length; qi++) {
-    var sq2 = SQUADS[qi];
-    html += '<tr>';
-    html += '<td style="background:' + sq2.color + ';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;border-bottom:2px solid #fff">' + sq2.name + '</td>';
-    for (var wj = 0; wj < ALL_WEEKS.length; wj++) {
-      var wk = ALL_WEEKS[wj];
-      var cellContent = "";
-      for (var uci2 = 0; uci2 < sq2.useCases.length; uci2++) {
-        var uc2 = sq2.useCases[uci2];
-        for (var phi = 0; phi < uc2.phases.length; phi++) {
-          var ph2 = uc2.phases[phi];
-          var startI = ALL_WEEKS.indexOf(ph2.startWk);
-          var endI = ALL_WEEKS.indexOf(ph2.endWk);
-          if (startI <= wj && wj <= endI) {
-            cellContent += '<div style="background:' + sq2.color + ';color:#fff;border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:7.5px;font-weight:600">' + uc2.name.split(" ").slice(0,2).join(" ") + '</div>';
-          }
-        }
-      }
-      html += '<td style="background:' + (qi%2===0?"#FAFAFA":"#fff") + ';border:1px solid #EEE;padding:3px;vertical-align:top;min-width:60px;min-height:40px">' + cellContent + '</td>';
-    }
-    html += '</tr>';
-  }
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
+// ── Program board ─────────────────────────────────────────────────────────────
+function renderProgramBoard(){
+  var el=document.getElementById("programBoard");
+  var html='<div style="background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow-x:auto">';
+  html+='<div style="font-weight:800;font-size:15px;color:#4C1D95;margin-bottom:12px">Program Board &mdash; All Squads</div>';
+  html+='<table style="border-collapse:collapse;width:100%;font-size:10px;min-width:900px"><thead><tr>';
+  html+='<th style="background:#4C1D95;color:#fff;padding:7px 10px;text-align:left;min-width:130px">Squad</th>';
+  SPRINTS.forEach(function(sp){
+    html+='<th style="background:'+(sp.name==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(sp.name==="BRP"?"#1F2937":"#fff")+';padding:7px 4px;text-align:center;min-width:'+(sp.weeks.length*55)+'px" colspan="'+sp.weeks.length+'">'+sp.name+'</th>';
+  });
+  html+='</tr><tr><td style="background:#F3F0FF;padding:3px 8px;font-size:8px;color:#6B7280"></td>';
+  ALL_WEEKS.forEach(function(wk){html+='<td style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border:1px solid #E5E0F8">'+wk+'</td>';});
+  html+='</tr></thead><tbody>';
+  DB.squads.forEach(function(s,qi){
+    html+='<tr><td style="background:'+s.color+';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;border-bottom:2px solid #fff">'+s.name+'</td>';
+    ALL_WEEKS.forEach(function(wk,wi){
+      var cells="";
+      ucsFor(s.id).forEach(function(uc){
+        phasesFor(uc.id).forEach(function(ph){
+          var si=wkIdx(ph.start_week),ei=wkIdx(ph.end_week);
+          if(si<=wi&&wi<=ei) cells+='<div style="background:'+s.color+';color:#fff;border-radius:3px;padding:2px 3px;margin-bottom:2px;font-size:7px;font-weight:600">'+uc.name.split(" ").slice(0,2).join(" ")+'</div>';
+        });
+      });
+      html+='<td style="background:'+(qi%2===0?"#FAFAFA":"#fff")+';border:1px solid #EEE;padding:3px;vertical-align:top;min-width:55px">'+cells+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
 }
 
-// ─── DEPS VIEW ───────────────────────────────────────────────────────────────
-function renderDepsView() {
-  var el = document.getElementById("depsView");
-  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">';
-  for (var qi = 0; qi < SQUADS.length; qi++) {
-    var sq2 = SQUADS[qi];
-    html += '<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid ' + sq2.color + '44">';
-    html += '<div style="background:' + sq2.color + ';padding:10px 14px"><div style="color:#fff;font-weight:700;font-size:13px">' + sq2.name + '</div></div>';
-    html += '<div style="padding:12px">';
-    for (var gi2 = 0; gi2 < sq2.depsAndRisks.groups.length; gi2++) {
-      var grp3 = sq2.depsAndRisks.groups[gi2];
-      html += '<div style="font-weight:700;font-size:9.5px;color:#4C1D95;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">' + grp3.label + '</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">';
-      for (var di2 = 0; di2 < grp3.items.length; di2++) {
-        html += '<div class="sticky ' + grp3.items[di2].color + '" style="font-size:9px;max-width:200px">' + grp3.items[di2].text + '</div>';
-      }
-      html += '</div>';
-    }
-    html += '</div></div>';
-  }
-  html += '</div>';
-  el.innerHTML = html;
+// ── Deps view ─────────────────────────────────────────────────────────────────
+function renderDepsView(){
+  var el=document.getElementById("depsView");
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">';
+  DB.squads.forEach(function(s){
+    html+='<div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid '+s.color+'44">';
+    html+='<div style="background:'+s.color+';padding:10px 14px"><div style="color:#fff;font-weight:700;font-size:13px">'+s.name+'</div></div><div style="padding:12px">';
+    groupsFor(s.id).forEach(function(g){
+      html+='<div style="font-weight:700;font-size:9.5px;color:#4C1D95;margin-bottom:5px;text-transform:uppercase">'+g.label+'</div>';
+      html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">';
+      itemsFor(g.id).forEach(function(it){ html+='<div class="sticky '+it.color+'" style="font-size:9px;max-width:200px">'+it.text+'</div>'; });
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
 }
 
-// ─── ACTIONS ─────────────────────────────────────────────────────────────────
-function selectSquad(i) {
-  currentSquad = i;
-  renderSelector();
-  if (currentView === "board") renderBoard();
-}
-
-function switchView(v, btn) {
-  currentView = v;
-  document.querySelectorAll(".nav-tab").forEach(function(t) { t.classList.remove("active"); });
+// ── Actions ───────────────────────────────────────────────────────────────────
+function selectSquad(i){ currentSquad=i; renderSelector(); renderBoard(); }
+function switchView(v,btn){
+  currentView=v;
+  document.querySelectorAll(".nav-tab").forEach(function(t){t.classList.remove("active")});
   btn.classList.add("active");
-  document.querySelectorAll(".view").forEach(function(el) { el.classList.remove("active"); });
-  document.getElementById("view-" + v).classList.add("active");
-  if (v === "board") renderBoard();
-  else if (v === "program") renderProgramBoard();
+  document.querySelectorAll(".view").forEach(function(el){el.classList.remove("active")});
+  document.getElementById("view-"+v).classList.add("active");
+  if(v==="board") renderBoard();
+  else if(v==="program") renderProgramBoard();
   else renderDepsView();
 }
-
-function toggleEdit() {
-  editMode = !editMode;
-  document.getElementById("editBanner").className = "edit-mode-banner" + (editMode ? " show" : "");
+function toggleEdit(){
+  editMode=!editMode;
+  document.getElementById("editBanner").className="edit-banner"+(editMode?" show":"");
   renderSelector();
-  showToast(editMode ? "Edit mode on — click any sticky to edit" : "Changes saved!");
+  renderBoard();
+  if(!editMode) showToast("Changes saved to database!");
+}
+async function setConfidence(v){
+  var s=sq();
+  await sb.from("squads").update({confidence:v}).eq("id",s.id);
+  s.confidence=v;
+  renderSelector();
+  renderBoard();
+  showToast("Confidence updated to "+v+"/5");
 }
 
-function showToast(msg, isError) {
-  var t = document.getElementById("toast");
-  t.textContent = msg;
-  t.className = "toast show" + (isError ? " error" : "");
-  setTimeout(function() { t.classList.remove("show"); }, 4000);
+// ── DB mutations ──────────────────────────────────────────────────────────────
+async function updateSticky(id,text){
+  await sb.from("stickies").update({text:text.trim()}).eq("id",id);
+  var s=DB.stickies.find(function(x){return x.id===id});
+  if(s) s.text=text.trim();
 }
-function setProgress(pct, msg) {
-  document.getElementById("progressBar").style.width = pct + "%";
-  if (msg) document.getElementById("progressSub").textContent = msg;
+async function addSticky(phaseId){
+  var text=prompt("New sticky text:");
+  if(!text) return;
+  var res=await sb.from("stickies").insert({phase_id:phaseId,text:text,color:"yellow",sort_order:999}).select();
+  if(res.data) DB.stickies.push(res.data[0]);
+  renderBoard();
+  showToast("Sticky added!");
+}
+async function deleteSticky(id){
+  if(!confirm("Delete this sticky?")) return;
+  await sb.from("stickies").delete().eq("id",id);
+  DB.stickies=DB.stickies.filter(function(s){return s.id!==id});
+  renderBoard();
+}
+async function addFloatDep(ucId){
+  var text=prompt("New floating dependency:");
+  if(!text) return;
+  var res=await sb.from("floating_deps").insert({use_case_id:ucId,text:text,sort_order:999}).select();
+  if(res.data) DB.floatingDeps.push(res.data[0]);
+  renderBoard();
+}
+async function updateFloatDep(id,text){
+  await sb.from("floating_deps").update({text:text.trim()}).eq("id",id);
+  var f=DB.floatingDeps.find(function(x){return x.id===id});
+  if(f) f.text=text.trim();
+}
+async function deleteFloatDep(id){
+  await sb.from("floating_deps").delete().eq("id",id);
+  DB.floatingDeps=DB.floatingDeps.filter(function(f){return f.id!==id});
+  renderBoard();
+}
+async function addDepItem(groupId){
+  var text=prompt("New dependency/risk text:");
+  if(!text) return;
+  var color=prompt("Color? (yellow/pink/purple/green)","yellow");
+  var res=await sb.from("dep_items").insert({group_id:groupId,text:text,color:color||"yellow",sort_order:999}).select();
+  if(res.data) DB.depItems.push(res.data[0]);
+  renderBoard();
+}
+async function updateDepItem(id,text){
+  await sb.from("dep_items").update({text:text.trim()}).eq("id",id);
+  var d=DB.depItems.find(function(x){return x.id===id});
+  if(d) d.text=text.trim();
+}
+async function addUseCase(sqId){
+  var name=prompt("Use case name:");
+  if(!name) return;
+  var desc=prompt("Short description:","");
+  var id=sqId+"_uc_"+Date.now();
+  var maxOrder=Math.max.apply(null,ucsFor(sqId).map(function(u){return u.sort_order||0}).concat([0]));
+  var res=await sb.from("use_cases").insert({id:id,squad_id:sqId,name:name,description:desc||"",sort_order:maxOrder+1}).select();
+  if(res.data) DB.useCases.push(res.data[0]);
+  renderBoard();
+  showToast("Use case added!");
+}
+async function addPhase(ucId){
+  var name=prompt("Phase name (e.g. 1. Discovery):");
+  if(!name) return;
+  var startWk=prompt("Start week (e.g. wk1):","wk1");
+  var endWk=prompt("End week (e.g. wk4):","wk4");
+  var owner=prompt("Owner:","");
+  var res=await sb.from("phases").insert({use_case_id:ucId,name:name,start_week:startWk||"wk1",end_week:endWk||"wk2",owner:owner||"",sort_order:999}).select();
+  if(res.data) DB.phases.push(res.data[0]);
+  renderBoard();
+  showToast("Phase added!");
+}
+async function deletePhase(id,ucId){
+  if(!confirm("Delete this phase and all its stickies?")) return;
+  await sb.from("stickies").delete().eq("phase_id",id);
+  await sb.from("phases").delete().eq("id",id);
+  DB.stickies=DB.stickies.filter(function(s){return s.phase_id!==id});
+  DB.phases=DB.phases.filter(function(p){return p.id!==id});
+  renderBoard();
 }
 
-// ─── PPTX EXPORT ─────────────────────────────────────────────────────────────
-function exportPPTX() {
-  showToast("Generating PowerPoint...");
-  // Full export function from previous version
-  var btn = document.getElementById("exportBtn");
-  btn.disabled = true;
+// ── PPTX Export ───────────────────────────────────────────────────────────────
+function exportPPTX(){
+  if(typeof PptxGenJS==="undefined"){showToast("PptxGenJS not loaded",true);return;}
+  var btn=document.querySelector(".btn-export");
+  btn.disabled=true;
   document.getElementById("progressOverlay").classList.add("show");
-  setProgress(5, "Setting up...");
-  setTimeout(function() {
-    try {
-      if (typeof PptxGenJS === "undefined") { showToast("PptxGenJS not loaded", true); return; }
-      var pres = new PptxGenJS();
-      pres.layout = "LAYOUT_WIDE"; pres.title = "PI2 Planning Workshop";
+  setProgress(5,"Setting up...");
+  setTimeout(function(){
+    try{
+      var pres=new PptxGenJS(); pres.layout="LAYOUT_WIDE"; pres.title="PI2 Planning Workshop";
       var W=13.3,H=7.5,WH="FFFFFF",PUR="6B00D7",PURD="4C1D95",GOLD="FCD34D",GR5="6B7280";
       function hdr(s,n){s.addText([{text:"BT Group PowerPoint    |",options:{color:GR5,fontSize:9}},{text:"  "+n,options:{color:GR5,fontSize:9,bold:true}}],{x:W-2.8,y:.1,w:2.7,h:.25,align:"right"});}
-      setProgress(15,"Cover...");
+      setProgress(10,"Cover...");
       var s1=pres.addSlide(); s1.background={color:"0A0A1A"};
       s1.addText("BT Business AI Ops.",{x:.5,y:.6,w:4.5,h:.5,fontSize:20,fontFace:"Calibri Light",color:WH});
       s1.addText("PI2 Planning\nWorkshop",{x:.5,y:1.15,w:4.5,h:1.8,fontSize:38,fontFace:"Calibri Light",color:WH});
@@ -925,59 +537,57 @@ function exportPPTX() {
       s1.addShape(pres.shapes.RECTANGLE,{x:0,y:H-.35,w:.22,h:.35,fill:{color:PUR},line:{color:PUR}});
       s1.addShape(pres.shapes.RECTANGLE,{x:.22,y:H-.35,w:.22,h:.35,fill:{color:"E91E8C"},line:{color:"E91E8C"}});
       s1.addShape(pres.shapes.RECTANGLE,{x:.44,y:H-.35,w:.22,h:.35,fill:{color:GOLD},line:{color:GOLD}});
-      setProgress(30,"Squad slides...");
       var slideNum=2;
-      for(var qi=0;qi<SQUADS.length;qi++){
-        var sq=SQUADS[qi],bg=sq.color.replace("#","");
-        setProgress(30+Math.round(qi/SQUADS.length*55),sq.name+"...");
+      DB.squads.forEach(function(s,qi){
+        setProgress(15+Math.round(qi/DB.squads.length*70),s.name+"...");
+        var bg=s.color.replace("#","");
         var ss=pres.addSlide(); ss.background={color:WH}; hdr(ss,slideNum++);
         ss.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:W,h:.9,fill:{color:bg},line:{color:bg}});
-        ss.addText(sq.name,{x:.3,y:0,w:10,h:.9,fontSize:22,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
-        ss.addText("Confidence: "+sq.confidence+"/5",{x:W-2,y:.05,w:1.8,h:.4,fontSize:11,color:"DDD6FE",align:"right"});
+        ss.addText(s.name,{x:.3,y:0,w:10,h:.9,fontSize:22,fontFace:"Calibri",color:WH,bold:true,valign:"middle"});
+        ss.addText("Confidence: "+s.confidence+"/5",{x:W-2,y:.05,w:1.8,h:.4,fontSize:11,color:"DDD6FE",align:"right"});
         var colW=2.5,cardH=1.4,cols=4;
-        for(var ui=0;ui<Math.min(sq.useCases.length,8);ui++){
-          var uc=sq.useCases[ui],col=ui%cols,row=Math.floor(ui/cols);
+        ucsFor(s.id).slice(0,8).forEach(function(uc,ui){
+          var col=ui%cols,row=Math.floor(ui/cols);
           var cx=.3+col*(colW+.1),cy=1.0+row*(cardH+.1);
           ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:cardH,fill:{color:WH},line:{color:bg+"55",pt:1}});
           ss.addShape(pres.shapes.RECTANGLE,{x:cx,y:cy,w:colW,h:.06,fill:{color:bg},line:{color:bg}});
           ss.addText(uc.name,{x:cx+.08,y:cy+.1,w:colW-.16,h:.35,fontSize:9,color:bg,bold:true});
-          ss.addText(uc.desc,{x:cx+.08,y:cy+.45,w:colW-.16,h:.85,fontSize:7,color:"374151",valign:"top"});
-        }
-      }
+          ss.addText(uc.description||"",{x:cx+.08,y:cy+.45,w:colW-.16,h:.85,fontSize:7,color:"374151",valign:"top"});
+        });
+      });
       setProgress(88,"Confidence vote...");
       var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
       cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
-      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence Voting",w:W-2.55-3.8-.7}];
-      var cvcx=.35,cvhy=1.05,cvrh=.92;
-      for(var ci=0;ci<cvcols.length;ci++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:cvcols[ci].w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(cvcols[ci].l,{x:cvcx,y:cvhy,w:cvcols[ci].w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=cvcols[ci].w;}
-      for(var qi2=0;qi2<SQUADS.length;qi2++){
-        var sq2=SQUADS[qi2],cvy=cvhy+.48+qi2*cvrh,cvbg=qi2%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
-        for(var ci2=0;ci2<cvcols.length;ci2++){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:cvcols[ci2].w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=cvcols[ci2].w;}
-        cv.addText(sq2.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:"000000",bold:true,valign:"middle"});
-        cv.addText(sq2.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:sq2.color.replace("#",""),bold:true,align:"center"});
-      }
+      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence",w:W-2.55-3.8-.7}];
+      var cvcx=.35,cvhy=1.05,cvrh=.85;
+      cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:c.w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(c.l,{x:cvcx,y:cvhy,w:c.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=c.w;});
+      DB.squads.forEach(function(s,qi){
+        var cvy=cvhy+.48+qi*cvrh,cvbg=qi%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
+        cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:c.w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=c.w;});
+        cv.addText(s.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:"000000",bold:true,valign:"middle"});
+        cv.addText(s.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:s.color.replace("#",""),bold:true,align:"center"});
+      });
       setProgress(95,"Saving...");
       var cls=pres.addSlide(); cls.background={color:PURD};
       cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
-      pres.writeFile({fileName:"PI2_Planning_Workshop_July2026.pptx"}).then(function(){
+      pres.writeFile({fileName:"PI2_Planning_Workshop.pptx"}).then(function(){
         setProgress(100,"Done!");
         setTimeout(function(){
           document.getElementById("progressOverlay").classList.remove("show");
-          btn.disabled=false; btn.textContent="Export to PowerPoint";
-          showToast("PowerPoint downloaded successfully!");
+          btn.disabled=false;
+          showToast("PowerPoint downloaded!");
         },500);
       });
-    } catch(err) {
+    } catch(e){
       document.getElementById("progressOverlay").classList.remove("show");
-      btn.disabled=false; btn.textContent="Export to PowerPoint";
-      showToast("Export failed: "+err.message, true);
+      btn.disabled=false;
+      showToast("Export failed: "+e.message,true);
     }
-  }, 100);
+  },100);
 }
 
-// ─── BOOT ────────────────────────────────────────────────────────────────────
-renderSelector();
-renderBoard();
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadAll();
 </script>
 </body>
 </html>
