@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BT AI Ops – PI Planning Tool</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -131,8 +131,10 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 <script>
 // ── Supabase ──────────────────────────────────────────────────────────────────
 var SUPA_URL = "https://jzufzorkfharnfvrjewk.supabase.co";
-var SUPA_KEY = "sb_publishable_TDg1mWjaUfY5mEUsJdjLgQ_bbOeogfx";
-var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dWZ6b3JrZmhhcm5mdnJqZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mjk3MTEsImV4cCI6MjA5NjUwNTcxMX0.mGq4Ii_2xA-Le54vMMIKGtvT55Dqo7-5WjpxnsATgeM";
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
+  auth: { persistSession: false }
+});
 
 // ── State ─────────────────────────────────────────────────────────────────────
 var DB = { squads:[], useCases:[], phases:[], stickies:[], floatingDeps:[], depGroups:[], depItems:[], teamMembers:[] };
@@ -146,6 +148,14 @@ var WEEK_W = 88, LABEL_W = 170;
 // ── Load all data ─────────────────────────────────────────────────────────────
 async function loadAll() {
   try {
+    // Test connection first
+    var test = await sb.from("squads").select("count", {count:"exact",head:true});
+    if (test.error) {
+      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Database connection failed:</strong><br>' + test.error.message + '<br><br><em>Please check the browser console (F12) for details.</em></div>';
+      document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C;font-size:12px">Connection failed: ' + test.error.message + '</span>';
+      return;
+    }
+
     var [sq,uc,ph,st,fd,dg,di,tm] = await Promise.all([
       sb.from("squads").select("*").order("name"),
       sb.from("use_cases").select("*").order("sort_order"),
@@ -156,6 +166,10 @@ async function loadAll() {
       sb.from("dep_items").select("*").order("sort_order"),
       sb.from("team_members").select("*").order("sort_order"),
     ]);
+
+    if (sq.error) throw new Error("squads: " + sq.error.message);
+    if (uc.error) throw new Error("use_cases: " + uc.error.message);
+
     DB.squads = sq.data || [];
     DB.useCases = uc.data || [];
     DB.phases = ph.data || [];
@@ -164,10 +178,19 @@ async function loadAll() {
     DB.depGroups = dg.data || [];
     DB.depItems = di.data || [];
     DB.teamMembers = tm.data || [];
+
+    if (DB.squads.length === 0) {
+      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#D97706;font-size:13px"><strong>No squads found in database.</strong><br>The SQL setup may not have run correctly.</div>';
+      document.getElementById("squadSelector").innerHTML = '<span style="color:#D97706;font-size:12px">No squads found</span>';
+      return;
+    }
+
     renderSelector();
     renderBoard();
   } catch(e) {
-    showToast("Failed to load data: " + e.message, true);
+    console.error("loadAll error:", e);
+    document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Error loading data:</strong><br>' + e.message + '</div>';
+    document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C;font-size:12px">Error: ' + e.message + '</span>';
   }
 }
 
@@ -307,9 +330,12 @@ function renderBoard(){
 
       html+='<div class="phase-stickies">';
       stickies.forEach(function(st){
-        html+='<div class="sticky-wrap"><div class="sticky yellow '+(editMode?"editable-sticky":"'')+'" '+(editMode?'contenteditable="true" onblur="updateSticky('+st.id+',this.textContent)"':'')+'>'+st.text+'</div>';
-        if(editMode) html+='<button class="btn-del-sticky" onclick="deleteSticky('+st.id+',\''+ph.id+'\')">&#10005;</button>';
-        html+='</div>';
+        var cls = editMode ? "sticky yellow editable-sticky" : "sticky yellow";
+        var attr = editMode ? " contenteditable=\"true\" onblur=\"updateSticky(" + st.id + ",this.textContent)\"" : "";
+        html += "<div class=\"sticky-wrap\">";
+        html += "<div class=\"" + cls + "\"" + attr + ">" + st.text + "</div>";
+        if(editMode) html += "<button class=\"btn-del-sticky\" onclick=\"deleteSticky(" + st.id + ")\">&#10005;</button>";
+        html += "</div>";
       });
       if(editMode) html+='<button class="add-sticky-btn" onclick="addSticky('+ph.id+')">+ sticky</button>';
       html+='</div>';
@@ -558,36 +584,4 @@ function exportPPTX(){
       setProgress(88,"Confidence vote...");
       var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
       cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
-      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence",w:W-2.55-3.8-.7}];
-      var cvcx=.35,cvhy=1.05,cvrh=.85;
-      cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:c.w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(c.l,{x:cvcx,y:cvhy,w:c.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=c.w;});
-      DB.squads.forEach(function(s,qi){
-        var cvy=cvhy+.48+qi*cvrh,cvbg=qi%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
-        cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:c.w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=c.w;});
-        cv.addText(s.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:"000000",bold:true,valign:"middle"});
-        cv.addText(s.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:s.color.replace("#",""),bold:true,align:"center"});
-      });
-      setProgress(95,"Saving...");
-      var cls=pres.addSlide(); cls.background={color:PURD};
-      cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
-      pres.writeFile({fileName:"PI2_Planning_Workshop.pptx"}).then(function(){
-        setProgress(100,"Done!");
-        setTimeout(function(){
-          document.getElementById("progressOverlay").classList.remove("show");
-          btn.disabled=false;
-          showToast("PowerPoint downloaded!");
-        },500);
-      });
-    } catch(e){
-      document.getElementById("progressOverlay").classList.remove("show");
-      btn.disabled=false;
-      showToast("Export failed: "+e.message,true);
-    }
-  },100);
-}
-
-// ── Boot ──────────────────────────────────────────────────────────────────────
-loadAll();
-</script>
-</body>
-</html>
+      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work
