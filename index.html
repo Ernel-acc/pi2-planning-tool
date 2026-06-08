@@ -870,10 +870,103 @@ function exportPPTX(){
       var s4=pres.addSlide(); s4.background={color:WH}; hdr(s4,4);
       s4.addText("Project timelines / Roadmap / related structure to be put. \u2013 60 min",{x:.35,y:2.8,w:W-.7,h:.8,fontSize:28,fontFace:"Calibri Light",color:BLK});
 
-      setProgress(24,"Slide 5: PI1 Recap...");
+      setProgress(24,"Slide 5: PI1 Recap Gantt...");
       var s5=pres.addSlide(); s5.background={color:WH}; hdr(s5,5);
-      s5.addText("Recap \u2013 PI1 Commitment \u2013 Outcome",{x:.35,y:.12,w:W-.7,h:.55,fontSize:24,fontFace:"Calibri Light",color:BLK});
-      s5.addText("See PI1 Gantt for full detail.",{x:.35,y:1,w:W-.7,h:.5,fontSize:14,color:GR5});
+      s5.addText("Recap \u2013 PI1 Commitment \u2013 Outcome",{x:.35,y:.06,w:W-.7,h:.52,fontSize:24,fontFace:"Calibri Light",color:BLK});
+      s5.addText("***Confidential - For Company Internal Use Only***",{x:3.5,y:.02,w:6.5,h:.2,fontSize:7.5,color:"BBBBBB",align:"center"});
+
+      // Gantt chart data
+      var ganttSprints=["Sprint 1","Sprint 2","Sprint 3","Sprint 4","Sprint 5","Sprint 6"];
+      var ganttWks=["8-Apr","14-Apr","15-Apr","28-Apr","29-Apr","12-May","13-May","26-May","27-May","9-Jun","10-Jun","23-Jun"];
+      var labelW5=1.55, featW5=2.45, gridX=labelW5+featW5+0.35;
+      var gridW=W-gridX-.2, colW=gridW/12;
+      var startY5=.7, hdrH=.28, wkH=.2, rowH=.23;
+
+      // Sprint header row
+      ganttSprints.forEach(function(sp,i){
+        var x=gridX+i*2*colW;
+        s5.addShape(pres.shapes.RECTANGLE,{x:x,y:startY5,w:2*colW-.03,h:hdrH,fill:{color:"EDE9FE"},line:{color:"CCCCCC",pt:.3}});
+        s5.addText(sp,{x:x,y:startY5,w:2*colW-.03,h:hdrH,fontSize:8,color:"6B00D7",bold:true,align:"center",valign:"middle",margin:0});
+        [0,1].forEach(function(wi){
+          var wx=x+wi*colW;
+          s5.addShape(pres.shapes.RECTANGLE,{x:wx,y:startY5+hdrH,w:colW-.02,h:wkH,fill:{color:"F3F4F6"},line:{color:"DDDDDD",pt:.2}});
+          s5.addText(ganttWks[i*2+wi]||"",{x:wx,y:startY5+hdrH,w:colW-.02,h:wkH,fontSize:6.5,color:"6B7280",align:"center",valign:"middle",margin:0});
+        });
+      });
+
+      // Column headers
+      s5.addShape(pres.shapes.RECTANGLE,{x:.2,y:startY5,w:labelW5,h:hdrH+wkH,fill:{color:"F3F4F6"},line:{color:"CCCCCC",pt:.3}});
+      s5.addText("SQUAD",{x:.2,y:startY5,w:labelW5,h:(hdrH+wkH)/2,fontSize:7.5,bold:true,color:"404040",align:"center",valign:"middle"});
+      s5.addShape(pres.shapes.RECTANGLE,{x:labelW5+.2,y:startY5,w:featW5,h:hdrH+wkH,fill:{color:"F3F4F6"},line:{color:"CCCCCC",pt:.3}});
+      s5.addText("PI Features",{x:labelW5+.2,y:startY5,w:featW5,h:(hdrH+wkH)/2,fontSize:7.5,bold:true,color:"404040",align:"center",valign:"middle"});
+
+      // Row data
+      var ganttRows=[
+        {squad:"Enhanced Feature",bg:"E8D5FF",features:[
+          {name:"Ticket Summarisation",done:true,bar:[0,10]},
+          {name:"Auto Resolution",done:true,bar:[0,10]},
+          {name:"AI Kx Article Creation",done:true,bar:[0,10]}
+        ]},
+        {squad:"Automation 1",bg:"D6F0D9",features:[
+          {name:"Auto-Test Diagnostics",done:false,bar:[0,12]},
+          {name:"Repeatable Automations",done:false,bar:[1,12]}
+        ]},
+        {squad:"Automation 2",bg:"F9D0E8",features:[
+          {name:"Resolver Task Creation",done:true,bar:[0,8]},
+          {name:"Intelligent Auto-closure",done:true,bar:[2,8]},
+          {name:"Email Management with Now Assist",done:true,bar:[4,10]},
+          {name:"Troubleshoot on Kx Base",done:false,bar:[6,12]},
+          {name:"PWR Automation [Auto-remediation for PWR]",done:false,bar:[5,12]}
+        ]},
+        {squad:"Data Foundation",bg:"D0F0F8",features:[
+          {name:"Data Model Mapping and Alignment to Inventory Systems and CMDB Data Quality",done:false,bar:[0,12]},
+          {name:"Agree Event Correlation Model",done:false,bar:[0,12]},
+          {name:"Define CI Binding Approach",done:false,bar:[0,12]},
+          {name:"Service Maps for Strategic Products",done:false,bar:[2,12]},
+          {name:"Establish Integration Patterns and Use Case Specific Integration Architectures",done:false,bar:[2,12]}
+        ]},
+        {squad:"Architecture",bg:"E8D5FF",features:[
+          {name:"KDDs Closure and Refined Target Architecture",done:true,bar:[0,8]},
+          {name:"Baselining Event Normalisation and Canonical Event Taxonomy Approach",done:true,bar:[0,8]},
+          {name:"Identification of Key Customer Network Metrics and KPIs",done:false,bar:[5,12]},
+          {name:"Agreement of Integration Patterns for Key OSB and BSS Data Sources",done:false,bar:[3,10]},
+          {name:"Use Case Specific Integration Architecture",done:false,bar:[2,10]},
+          {name:"Identification of client-owned Dependencies for the Use Case Integration Delivery",done:false,bar:[2,9]},
+          {name:"Alignment on Delivery Timelines",done:false,bar:[8,12]}
+        ]}
+      ];
+
+      var curY=startY5+hdrH+wkH;
+      ganttRows.forEach(function(group){
+        var groupStart=curY;
+        var numRows=group.features.length;
+        group.features.forEach(function(feat,fi){
+          var ry=curY;
+          var fbg=fi%2===0?WH:"F9F9F9";
+          // Squad cell (only on first row of group)
+          if(fi===0){
+            s5.addShape(pres.shapes.RECTANGLE,{x:.2,y:ry,w:labelW5,h:numRows*rowH,fill:{color:group.bg},line:{color:"CCCCCC",pt:.3}});
+            s5.addText(group.squad,{x:.2,y:ry,w:labelW5,h:numRows*rowH,fontSize:7.5,bold:true,color:"404040",align:"center",valign:"middle"});
+          }
+          // Feature name
+          s5.addShape(pres.shapes.RECTANGLE,{x:labelW5+.2,y:ry,w:featW5,h:rowH,fill:{color:fbg},line:{color:"DDDDDD",pt:.2}});
+          s5.addText(feat.name,{x:labelW5+.22,y:ry,w:featW5-.35,h:rowH,fontSize:7,color:"374151",valign:"middle"});
+          if(feat.done){
+            s5.addText("\u2611",{x:labelW5+featW5-.1,y:ry,w:.25,h:rowH,fontSize:8,color:"00A550",align:"center",valign:"middle",margin:0});
+          }
+          // Gantt bar background
+          s5.addShape(pres.shapes.RECTANGLE,{x:gridX,y:ry,w:gridW,h:rowH,fill:{color:fbg},line:{color:"EEEEEE",pt:.1}});
+          // Gantt bar
+          if(feat.bar[1]>feat.bar[0]){
+            var bx=gridX+feat.bar[0]*colW;
+            var bw=(feat.bar[1]-feat.bar[0])*colW-.03;
+            s5.addShape(pres.shapes.RECTANGLE,{x:bx,y:ry+.03,w:bw,h:rowH-.06,fill:{color:feat.done?"D8B4FE":"F0E0FF"},line:{color:feat.done?"6B00D7":"CCAAEE",pt:.3}});
+            // Arrow tip on right end
+            s5.addShape(pres.shapes.RECTANGLE,{x:bx+bw-.05,y:ry+.03,w:.05,h:rowH-.06,fill:{color:feat.done?"6B00D7":"B57BEE"},line:{color:feat.done?"6B00D7":"B57BEE"}});
+          }
+          curY+=rowH;
+        });
+      });
 
       setProgress(28,"Slide 6: Business Context...");
       var s6=pres.addSlide(); s6.background={color:WH}; hdr(s6,6);
