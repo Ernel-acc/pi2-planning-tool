@@ -454,29 +454,83 @@ function endDragTouch(e){
 
 // ── Program board ─────────────────────────────────────────────────────────────
 function renderProgramBoard(){
+  var WK_PX=80, LBL_PX=140;
+  var totalW=LBL_PX+ALL_WEEKS.length*WK_PX;
   var h='<div style="background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow-x:auto">';
   h+='<div style="font-weight:800;font-size:15px;color:#4C1D95;margin-bottom:12px">Program Board &mdash; All Squads</div>';
-  h+='<table style="border-collapse:collapse;width:100%;font-size:10px;min-width:900px"><thead><tr>';
-  h+='<th style="background:#4C1D95;color:#fff;padding:7px 10px;text-align:left;min-width:130px">Squad</th>';
-  SPRINTS.forEach(function(sp){h+='<th style="background:'+(sp.name==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(sp.name==="BRP"?"#1F2937":"#fff")+';padding:7px 4px;text-align:center" colspan="'+sp.weeks.length+'">'+sp.name+'</th>';});
-  h+='</tr><tr><td style="background:#F3F0FF;padding:3px 8px;font-size:8px;color:#6B7280"></td>';
-  ALL_WEEKS.forEach(function(wk){h+='<td style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border:1px solid #E5E0F8">'+wk+'</td>';});
-  h+='</tr></thead><tbody>';
-  DB.squads.forEach(function(s,qi){
-    h+='<tr><td style="background:'+s.color+';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;border-bottom:2px solid #fff">'+s.name+'</td>';
-    ALL_WEEKS.forEach(function(wk,wi){
-      var cells="";
-      ucsFor(s.id).forEach(function(uc){
-        phFor(uc.id).forEach(function(ph){
-          var si=wkI(ph.start_week),ei=wkI(ph.end_week);
-          if(si<=wi&&wi<=ei) cells+='<div style="background:'+s.color+';color:#fff;border-radius:3px;padding:2px 3px;margin-bottom:2px;font-size:7px;font-weight:600">'+uc.name.split(" ").slice(0,2).join(" ")+'</div>';
-        });
-      });
-      h+='<td style="background:'+(qi%2===0?"#FAFAFA":"#fff")+';border:1px solid #EEE;padding:3px;vertical-align:top;min-width:55px">'+cells+'</td>';
-    });
-    h+='</tr>';
+  h+='<div style="min-width:'+totalW+'px">';
+
+  // Sprint headers
+  h+='<div style="display:grid;grid-template-columns:'+LBL_PX+'px '+SPRINTS.map(function(sp){return sp.weeks.length*WK_PX+'px';}).join(' ')+'">';
+  h+='<div style="background:#4C1D95;padding:7px 10px;color:#fff;font-weight:700;font-size:10px">Squad</div>';
+  SPRINTS.forEach(function(sp){
+    h+='<div style="background:'+(sp.name==="BRP"?"#FCD34D":"#4C1D95")+';color:'+(sp.name==="BRP"?"#1F2937":"#fff")+';text-align:center;padding:7px 4px;font-weight:700;font-size:10px;border-left:1px solid rgba(255,255,255,.2)">'+sp.name+'</div>';
   });
-  h+='</tbody></table></div>';
+  h+='</div>';
+
+  // Week sub-headers
+  h+='<div style="display:grid;grid-template-columns:'+LBL_PX+'px '+ALL_WEEKS.map(function(){return WK_PX+'px';}).join(' ')+';border-bottom:2px solid #4C1D95">';
+  h+='<div style="background:#F3F0FF;padding:3px 8px;font-size:8px;color:#6B7280;font-weight:600">Use Case</div>';
+  ALL_WEEKS.forEach(function(wk){
+    h+='<div style="background:#F3F0FF;padding:3px 4px;font-size:8px;color:#6B7280;text-align:center;border-left:1px solid #E5E0F8">'+wk+'</div>';
+  });
+  h+='</div>';
+
+  // Squad rows
+  DB.squads.forEach(function(s,qi){
+    var ucs=ucsFor(s.id);
+    var rowBg=qi%2===0?'#FAFAFA':'#fff';
+
+    // Collect all phases for this squad
+    var allPhases=[];
+    ucs.forEach(function(uc){
+      phFor(uc.id).forEach(function(ph){
+        var si=wkI(ph.start_week), ei=wkI(ph.end_week);
+        if(si<0)si=0; if(ei<0)ei=ALL_WEEKS.length-1;
+        allPhases.push({uc:uc,ph:ph,si:si,ei:ei,row:0});
+      });
+    });
+
+    // Assign rows to avoid overlaps
+    var rowSlots=[];
+    allPhases.forEach(function(item){
+      var placed=false;
+      for(var r=0;r<rowSlots.length;r++){
+        var ok=true;
+        rowSlots[r].forEach(function(ex){if(!(ex.ei<item.si||ex.si>item.ei))ok=false;});
+        if(ok){rowSlots[r].push(item);item.row=r;placed=true;break;}
+      }
+      if(!placed){rowSlots.push([item]);item.row=rowSlots.length-1;}
+    });
+    var numRows=rowSlots.length||1;
+    var rowH=28, gap=3, pad=5;
+    var canvasH=pad+numRows*(rowH+gap);
+
+    h+='<div style="display:grid;grid-template-columns:'+LBL_PX+'px 1fr;border-bottom:2px solid '+s.color+'33">';
+    h+='<div style="background:'+s.color+';color:#fff;padding:8px 10px;font-weight:700;font-size:9px;display:flex;align-items:center">'+s.name+'</div>';
+    h+='<div style="position:relative;background:'+rowBg+';height:'+canvasH+'px">';
+
+    // Week grid lines
+    ALL_WEEKS.forEach(function(wk,wi){
+      h+='<div style="position:absolute;left:'+(wi*WK_PX)+'px;top:0;width:'+WK_PX+'px;height:100%;border-right:1px solid #EEE;background:'+(wk==="wk11"?"#FFFBEB":"transparent")+';pointer-events:none"></div>';
+    });
+
+    // Phase bars — each one spans its full width
+    allPhases.forEach(function(item){
+      var left=item.si*WK_PX;
+      var width=(item.ei-item.si+1)*WK_PX-4;
+      var top=pad+item.row*(rowH+gap);
+      var label=item.uc.name.length>22?item.uc.name.slice(0,20)+'...':item.uc.name;
+      h+='<div title="'+item.uc.name+' | '+item.ph.name+'" style="position:absolute;left:'+left+'px;top:'+top+'px;width:'+width+'px;height:'+rowH+'px;background:'+s.color+';border-radius:4px;display:flex;align-items:center;padding:0 8px;box-shadow:0 1px 4px rgba(0,0,0,.18);overflow:hidden">';
+      h+='<span style="color:#fff;font-size:8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">'+label+'</span>';
+      h+='<div style="width:5px;height:100%;background:rgba(0,0,0,.2);flex-shrink:0;border-radius:0 4px 4px 0;margin-right:-8px"></div>';
+      h+='</div>';
+    });
+
+    h+='</div></div>';
+  });
+
+  h+='</div></div>';
   document.getElementById("programBoard").innerHTML=h;
 }
 
