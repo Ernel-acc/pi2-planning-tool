@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BT AI Ops – PI Planning Tool</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -132,9 +132,69 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
 // ── Supabase ──────────────────────────────────────────────────────────────────
 var SUPA_URL = "https://jzufzorkfharnfvrjewk.supabase.co";
 var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dWZ6b3JrZmhhcm5mdnJqZXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mjk3MTEsImV4cCI6MjA5NjUwNTcxMX0.mGq4Ii_2xA-Le54vMMIKGtvT55Dqo7-5WjpxnsATgeM";
-var sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
-  auth: { persistSession: false }
-});
+
+// Direct fetch wrapper - no library needed
+var sb = {
+  from: function(table) {
+    var base = SUPA_URL + "/rest/v1/" + table;
+    var headers = {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer " + SUPA_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation"
+    };
+    return {
+      select: function(cols, opts) {
+        var url = base + "?select=" + (cols||"*");
+        if(opts && opts.count) url += "&" + opts.count + "=exact";
+        return {
+          order: function(col) {
+            url += "&order=" + col;
+            return fetch(url, {headers: headers})
+              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[], error: d.message?{message:d.message}:null}; }); })
+              .catch(function(e){ return {data:[], error:{message:e.message}}; });
+          },
+          eq: function(col, val) {
+            url += "&" + col + "=eq." + val;
+            return fetch(url, {headers: headers})
+              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[], error:null}; }); });
+          },
+          then: function(cb) {
+            return fetch(url, {headers: headers})
+              .then(function(r){ return r.json(); })
+              .then(function(d){ return cb({data:Array.isArray(d)?d:[], error:null}); });
+          }
+        };
+      },
+      insert: function(data) {
+        return {
+          select: function() {
+            return fetch(base, {method:"POST", headers:headers, body:JSON.stringify(data)})
+              .then(function(r){ return r.json().then(function(d){ return {data:Array.isArray(d)?d:[d], error:null}; }); })
+              .catch(function(e){ return {data:[], error:{message:e.message}}; });
+          }
+        };
+      },
+      update: function(data) {
+        return {
+          eq: function(col, val) {
+            return fetch(base+"?"+col+"=eq."+val, {method:"PATCH", headers:headers, body:JSON.stringify(data)})
+              .then(function(r){ return {data:null, error:null}; })
+              .catch(function(e){ return {error:{message:e.message}}; });
+          }
+        };
+      },
+      delete: function() {
+        return {
+          eq: function(col, val) {
+            return fetch(base+"?"+col+"=eq."+val, {method:"DELETE", headers:headers})
+              .then(function(){ return {data:null, error:null}; });
+          }
+        };
+      }
+    };
+  }
+};
 
 // ── State ─────────────────────────────────────────────────────────────────────
 var DB = { squads:[], useCases:[], phases:[], stickies:[], floatingDeps:[], depGroups:[], depItems:[], teamMembers:[] };
@@ -148,40 +208,36 @@ var WEEK_W = 88, LABEL_W = 170;
 // ── Load all data ─────────────────────────────────────────────────────────────
 async function loadAll() {
   try {
-    // Test connection first
-    var test = await sb.from("squads").select("count", {count:"exact",head:true});
-    if (test.error) {
-      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Database connection failed:</strong><br>' + test.error.message + '<br><br><em>Please check the browser console (F12) for details.</em></div>';
-      document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C;font-size:12px">Connection failed: ' + test.error.message + '</span>';
+    var results = await Promise.all([
+      fetch(SUPA_URL+"/rest/v1/squads?select=*&order=name", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/use_cases?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/phases?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/stickies?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/floating_deps?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/dep_groups?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/dep_items?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+      fetch(SUPA_URL+"/rest/v1/team_members?select=*&order=sort_order", {headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}}).then(function(r){return r.json()}),
+    ]);
+
+    DB.squads      = Array.isArray(results[0]) ? results[0] : [];
+    DB.useCases    = Array.isArray(results[1]) ? results[1] : [];
+    DB.phases      = Array.isArray(results[2]) ? results[2] : [];
+    DB.stickies    = Array.isArray(results[3]) ? results[3] : [];
+    DB.floatingDeps= Array.isArray(results[4]) ? results[4] : [];
+    DB.depGroups   = Array.isArray(results[5]) ? results[5] : [];
+    DB.depItems    = Array.isArray(results[6]) ? results[6] : [];
+    DB.teamMembers = Array.isArray(results[7]) ? results[7] : [];
+
+    if(!Array.isArray(results[0])) {
+      var errMsg = results[0].message || JSON.stringify(results[0]);
+      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Database error:</strong><br>' + errMsg + '</div>';
+      document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C">Error: ' + errMsg + '</span>';
       return;
     }
 
-    var [sq,uc,ph,st,fd,dg,di,tm] = await Promise.all([
-      sb.from("squads").select("*").order("name"),
-      sb.from("use_cases").select("*").order("sort_order"),
-      sb.from("phases").select("*").order("sort_order"),
-      sb.from("stickies").select("*").order("sort_order"),
-      sb.from("floating_deps").select("*").order("sort_order"),
-      sb.from("dep_groups").select("*").order("sort_order"),
-      sb.from("dep_items").select("*").order("sort_order"),
-      sb.from("team_members").select("*").order("sort_order"),
-    ]);
-
-    if (sq.error) throw new Error("squads: " + sq.error.message);
-    if (uc.error) throw new Error("use_cases: " + uc.error.message);
-
-    DB.squads = sq.data || [];
-    DB.useCases = uc.data || [];
-    DB.phases = ph.data || [];
-    DB.stickies = st.data || [];
-    DB.floatingDeps = fd.data || [];
-    DB.depGroups = dg.data || [];
-    DB.depItems = di.data || [];
-    DB.teamMembers = tm.data || [];
-
-    if (DB.squads.length === 0) {
-      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#D97706;font-size:13px"><strong>No squads found in database.</strong><br>The SQL setup may not have run correctly.</div>';
-      document.getElementById("squadSelector").innerHTML = '<span style="color:#D97706;font-size:12px">No squads found</span>';
+    if(DB.squads.length === 0) {
+      document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#D97706;font-size:13px"><strong>No squads found.</strong><br>The SQL seed data may not have run correctly.</div>';
+      document.getElementById("squadSelector").innerHTML = '<span style="color:#D97706">No squads found</span>';
       return;
     }
 
@@ -189,10 +245,12 @@ async function loadAll() {
     renderBoard();
   } catch(e) {
     console.error("loadAll error:", e);
-    document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Error loading data:</strong><br>' + e.message + '</div>';
-    document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C;font-size:12px">Error: ' + e.message + '</span>';
+    document.getElementById("mainBoard").innerHTML = '<div style="padding:40px;text-align:center;color:#B91C1C;font-size:13px"><strong>Error:</strong><br>' + e.message + '</div>';
+    document.getElementById("squadSelector").innerHTML = '<span style="color:#B91C1C">Error: ' + e.message + '</span>';
   }
 }
+
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function sq() { return DB.squads[currentSquad] || {}; }
@@ -455,7 +513,7 @@ function toggleEdit(){
 }
 async function setConfidence(v){
   var s=sq();
-  await sb.from("squads").update({confidence:v}).eq("id",s.id);
+  await fetch(SUPA_URL+"/rest/v1/squads?id=eq."+s.id, {method:"PATCH", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"}, body:JSON.stringify({confidence:v})});
   s.confidence=v;
   renderSelector();
   renderBoard();
@@ -464,21 +522,22 @@ async function setConfidence(v){
 
 // ── DB mutations ──────────────────────────────────────────────────────────────
 async function updateSticky(id,text){
-  await sb.from("stickies").update({text:text.trim()}).eq("id",id);
+  await fetch(SUPA_URL+"/rest/v1/stickies?id=eq."+id, {method:"PATCH", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"}, body:JSON.stringify({text:text.trim()})});
   var s=DB.stickies.find(function(x){return x.id===id});
   if(s) s.text=text.trim();
 }
 async function addSticky(phaseId){
   var text=prompt("New sticky text:");
   if(!text) return;
-  var res=await sb.from("stickies").insert({phase_id:phaseId,text:text,color:"yellow",sort_order:999}).select();
-  if(res.data) DB.stickies.push(res.data[0]);
+  var res=await fetch(SUPA_URL+"/rest/v1/stickies", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({phase_id:phaseId,text:text,color:"yellow",sort_order:999})});
+  var data=await res.json();
+  if(Array.isArray(data)&&data[0]) DB.stickies.push(data[0]);
   renderBoard();
   showToast("Sticky added!");
 }
 async function deleteSticky(id){
   if(!confirm("Delete this sticky?")) return;
-  await sb.from("stickies").delete().eq("id",id);
+  await fetch(SUPA_URL+"/rest/v1/stickies?id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
   DB.stickies=DB.stickies.filter(function(s){return s.id!==id});
   renderBoard();
 }
@@ -518,8 +577,9 @@ async function addUseCase(sqId){
   var desc=prompt("Short description:","");
   var id=sqId+"_uc_"+Date.now();
   var maxOrder=Math.max.apply(null,ucsFor(sqId).map(function(u){return u.sort_order||0}).concat([0]));
-  var res=await sb.from("use_cases").insert({id:id,squad_id:sqId,name:name,description:desc||"",sort_order:maxOrder+1}).select();
-  if(res.data) DB.useCases.push(res.data[0]);
+  var res=await fetch(SUPA_URL+"/rest/v1/use_cases", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({id:id,squad_id:sqId,name:name,description:desc||"",sort_order:maxOrder+1})});
+  var data=await res.json();
+  if(Array.isArray(data)&&data[0]) DB.useCases.push(data[0]);
   renderBoard();
   showToast("Use case added!");
 }
@@ -529,15 +589,16 @@ async function addPhase(ucId){
   var startWk=prompt("Start week (e.g. wk1):","wk1");
   var endWk=prompt("End week (e.g. wk4):","wk4");
   var owner=prompt("Owner:","");
-  var res=await sb.from("phases").insert({use_case_id:ucId,name:name,start_week:startWk||"wk1",end_week:endWk||"wk2",owner:owner||"",sort_order:999}).select();
-  if(res.data) DB.phases.push(res.data[0]);
+  var res=await fetch(SUPA_URL+"/rest/v1/phases", {method:"POST", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation"}, body:JSON.stringify({use_case_id:ucId,name:name,start_week:startWk||"wk1",end_week:endWk||"wk2",owner:owner||"",sort_order:999})});
+  var data=await res.json();
+  if(Array.isArray(data)&&data[0]) DB.phases.push(data[0]);
   renderBoard();
   showToast("Phase added!");
 }
 async function deletePhase(id,ucId){
   if(!confirm("Delete this phase and all its stickies?")) return;
-  await sb.from("stickies").delete().eq("phase_id",id);
-  await sb.from("phases").delete().eq("id",id);
+  await fetch(SUPA_URL+"/rest/v1/stickies?phase_id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
+  await fetch(SUPA_URL+"/rest/v1/phases?id=eq."+id, {method:"DELETE", headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
   DB.stickies=DB.stickies.filter(function(s){return s.phase_id!==id});
   DB.phases=DB.phases.filter(function(p){return p.id!==id});
   renderBoard();
@@ -584,4 +645,36 @@ function exportPPTX(){
       setProgress(88,"Confidence vote...");
       var cv=pres.addSlide(); cv.background={color:WH}; hdr(cv,slideNum++);
       cv.addText("Confidence Voting",{x:.35,y:.1,w:W-.7,h:.6,fontSize:26,fontFace:"Calibri",color:PUR,bold:true});
-      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work
+      var cvcols=[{l:"SQUADS",w:2.55},{l:"Work Stream",w:3.8},{l:"Confidence",w:W-2.55-3.8-.7}];
+      var cvcx=.35,cvhy=1.05,cvrh=.85;
+      cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvhy,w:c.w,h:.48,fill:{color:PUR},line:{color:PUR}});cv.addText(c.l,{x:cvcx,y:cvhy,w:c.w,h:.48,fontSize:12,color:WH,bold:true,align:"center",valign:"middle",margin:0});cvcx+=c.w;});
+      DB.squads.forEach(function(s,qi){
+        var cvy=cvhy+.48+qi*cvrh,cvbg=qi%2===0?"EDE9FE":"F3F4F6"; cvcx=.35;
+        cvcols.forEach(function(c){cv.addShape(pres.shapes.RECTANGLE,{x:cvcx,y:cvy,w:c.w,h:cvrh,fill:{color:cvbg},line:{color:"DDDDDD",pt:.3}});cvcx+=c.w;});
+        cv.addText(s.name.toUpperCase(),{x:.43,y:cvy,w:cvcols[0].w-.16,h:cvrh,fontSize:11,color:"000000",bold:true,valign:"middle"});
+        cv.addText(s.confidence+"/5",{x:.35+cvcols[0].w+cvcols[1].w+.2,y:cvy+cvrh/2-.2,w:cvcols[2].w-.4,h:.4,fontSize:18,color:s.color.replace("#",""),bold:true,align:"center"});
+      });
+      setProgress(95,"Saving...");
+      var cls=pres.addSlide(); cls.background={color:PURD};
+      cls.addText("Day 2 Ends - Thanks",{x:.5,y:H/2-.5,w:W-1,h:1,fontSize:38,fontFace:"Calibri Light",color:WH});
+      pres.writeFile({fileName:"PI2_Planning_Workshop.pptx"}).then(function(){
+        setProgress(100,"Done!");
+        setTimeout(function(){
+          document.getElementById("progressOverlay").classList.remove("show");
+          btn.disabled=false;
+          showToast("PowerPoint downloaded!");
+        },500);
+      });
+    } catch(e){
+      document.getElementById("progressOverlay").classList.remove("show");
+      btn.disabled=false;
+      showToast("Export failed: "+e.message,true);
+    }
+  },100);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
