@@ -839,17 +839,36 @@ async function delFreeSticky(id) {
   renderBoard();
 }
 
-function editNavDate(){
+async function editNavDate(){
   var current = document.getElementById("navDateDisplay").textContent;
-  var newVal = prompt("Edit date label (e.g. PI3 — Jan 2027):", current);
+  var newVal = prompt("Edit date label (e.g. PI3 \u2014 Jan 2027):", current);
   if(!newVal || newVal.trim()===current) return;
   newVal = newVal.trim();
   document.getElementById("navDateDisplay").textContent = newVal;
-  // Save to a settings table or reuse squads notes — store in localStorage as fallback
+  // Save to localStorage as immediate fallback
   localStorage.setItem("pi_date_label", newVal);
-  showToast("Date updated to: " + newVal);
+  // Save to Supabase so all users see the same label
+  try {
+    await fetch(SUPA_URL+"/rest/v1/settings?key=eq.pi_date_label", {
+      method:"PATCH", headers:HDRS, body:JSON.stringify({value:newVal})
+    });
+    showToast("Date updated for everyone: " + newVal);
+  } catch(e) {
+    showToast("Saved locally. DB save failed: "+e.message, true);
+  }
 }
-function loadNavDate(){
+async function loadNavDate(){
+  // Try Supabase first, fall back to localStorage
+  try {
+    var res = await fetch(SUPA_URL+"/rest/v1/settings?key=eq.pi_date_label&select=value", {headers:HDRS});
+    var data = await res.json();
+    if(Array.isArray(data) && data[0] && data[0].value) {
+      document.getElementById("navDateDisplay").textContent = data[0].value;
+      localStorage.setItem("pi_date_label", data[0].value);
+      return;
+    }
+  } catch(e) {}
+  // Fallback to localStorage
   var saved = localStorage.getItem("pi_date_label");
   if(saved) document.getElementById("navDateDisplay").textContent = saved;
 }
