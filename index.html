@@ -110,7 +110,7 @@ nav{background:#4C1D95;display:flex;align-items:center;justify-content:space-bet
   <div class="nav-brand">
     <div class="nav-bar"></div>
     <div><div class="nav-sub">BT AI Ops</div><div class="nav-title">PI Planning Tool</div></div>
-    <div class="nav-date">PI2 &mdash; July 2026</div>
+    <div class="nav-date" id="navDateDisplay" onclick="editNavDate()" title="Click to edit" style="cursor:pointer">PI2 &mdash; July 2026</div>
   </div>
   <div class="nav-right">
     <button class="nav-tab active" onclick="switchView('board',this)">Planning Board</button>
@@ -839,6 +839,20 @@ async function delFreeSticky(id) {
   renderBoard();
 }
 
+function editNavDate(){
+  var current = document.getElementById("navDateDisplay").textContent;
+  var newVal = prompt("Edit date label (e.g. PI3 — Jan 2027):", current);
+  if(!newVal || newVal.trim()===current) return;
+  newVal = newVal.trim();
+  document.getElementById("navDateDisplay").textContent = newVal;
+  // Save to a settings table or reuse squads notes — store in localStorage as fallback
+  localStorage.setItem("pi_date_label", newVal);
+  showToast("Date updated to: " + newVal);
+}
+function loadNavDate(){
+  var saved = localStorage.getItem("pi_date_label");
+  if(saved) document.getElementById("navDateDisplay").textContent = saved;
+}
 function showToast(msg,e){
   var t=document.getElementById("toast"); t.textContent=msg;
   t.className="toast show"+(e?" error":"");
@@ -1250,6 +1264,7 @@ function exportPPTX(){
 }
 
 loadAll();
+loadNavDate();
 </script>
 </body>
 </html>
